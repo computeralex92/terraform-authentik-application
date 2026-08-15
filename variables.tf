@@ -9,16 +9,24 @@ variable "slug" {
 }
 
 variable "protocol" {
-  description = "Provider protocol: `oauth2` or `saml`."
+  description = "Provider protocol: `oauth2`, `saml`, `proxy`, `ldap`, `radius`, `ws_federation`, or `microsoft_entra`."
   type        = string
   validation {
-    condition     = contains(["oauth2", "saml"], var.protocol)
-    error_message = "`protocol` must be either 'oauth2' or 'saml'."
+    condition     = contains(["oauth2", "saml", "proxy", "ldap", "radius", "ws_federation", "microsoft_entra"], var.protocol)
+    error_message = "`protocol` must be one of 'oauth2', 'saml', 'proxy', 'ldap', 'radius', 'ws_federation', or 'microsoft_entra'."
   }
 
   validation {
-    condition     = (var.protocol == "oauth2" && var.oauth2 != null) || (var.protocol == "saml" && var.saml != null)
-    error_message = "`protocol` requires the matching provider block: provide `oauth2` when protocol is 'oauth2', or `saml` when protocol is 'saml'."
+    condition = (
+      (var.protocol == "oauth2" && var.oauth2 != null) ||
+      (var.protocol == "saml" && var.saml != null) ||
+      (var.protocol == "proxy" && var.proxy != null) ||
+      (var.protocol == "ldap" && var.ldap != null) ||
+      (var.protocol == "radius" && var.radius != null) ||
+      (var.protocol == "ws_federation" && var.ws_federation != null) ||
+      (var.protocol == "microsoft_entra" && var.microsoft_entra != null)
+    )
+    error_message = "`protocol` requires the matching provider block: provide the block for the protocol you select."
   }
 }
 
@@ -98,6 +106,18 @@ variable "authentication_flow" {
   default     = null
 }
 
+variable "bind_flow" {
+  description = "Slug of the bind flow used by the LDAP provider (must exist in Authentik)."
+  type        = string
+  default     = "default-authentication-flow"
+}
+
+variable "unbind_flow" {
+  description = "Slug of the unbind flow used by the LDAP provider (must exist in Authentik)."
+  type        = string
+  default     = "default-provider-invalidation"
+}
+
 variable "oauth2" {
   description = <<-EOT
     OAuth2 provider configuration. Required when `protocol = "oauth2"`. If
@@ -166,6 +186,144 @@ variable "saml" {
       friendly_name = optional(string)
     })))
     property_mappings = optional(list(string))
+  })
+  default = null
+}
+
+variable "proxy" {
+  description = <<-EOT
+    Reverse-proxy provider configuration. Required when `protocol = "proxy"`.
+    `external_host` is the externally reachable host. `scopes` creates scope
+    mappings and attaches them; `property_mappings` references existing scope
+    mapping IDs.
+  EOT
+  type = object({
+    external_host                 = string
+    mode                          = optional(string)
+    internal_host                 = optional(string)
+    internal_host_ssl_validation  = optional(bool)
+    intercept_header_auth         = optional(bool)
+    cookie_domain                 = optional(string)
+    basic_auth_enabled            = optional(bool)
+    basic_auth_username_attribute = optional(string)
+    basic_auth_password_attribute = optional(string)
+    access_token_validity         = optional(string)
+    refresh_token_validity        = optional(string)
+    skip_path_regex               = optional(string)
+    jwt_federation_providers      = optional(list(number))
+    jwt_federation_sources        = optional(list(string))
+    scopes = optional(list(object({
+      scope_name  = string
+      expression  = string
+      description = optional(string)
+      name        = optional(string)
+    })))
+    property_mappings = optional(list(string))
+  })
+  default = null
+}
+
+variable "ldap" {
+  description = <<-EOT
+    LDAP provider configuration. Required when `protocol = "ldap"`. Uses
+    `bind_flow` / `unbind_flow` for the bind/unbind flows. `certificate` is a
+    certificate key pair name.
+  EOT
+  type = object({
+    base_dn          = string
+    bind_mode        = optional(string)
+    search_mode      = optional(string)
+    certificate      = optional(string)
+    mfa_support      = optional(bool)
+    tls_server_name  = optional(string)
+    gid_start_number = optional(number)
+    uid_start_number = optional(number)
+  })
+  default = null
+}
+
+variable "radius" {
+  description = <<-EOT
+    RADIUS provider configuration. Required when `protocol = "radius"`.
+    `shared_secret` is the RADIUS shared secret. `certificate` is a certificate
+    key pair name. `mappings` creates RADIUS property mappings and attaches
+    them; `property_mappings` references existing RADIUS property mapping IDs.
+  EOT
+  type = object({
+    shared_secret   = string
+    client_networks = optional(string)
+    certificate     = optional(string)
+    mfa_support     = optional(bool)
+    mappings = optional(list(object({
+      name       = string
+      expression = string
+    })))
+    property_mappings = optional(list(string))
+  })
+  default = null
+}
+
+variable "ws_federation" {
+  description = <<-EOT
+    WS-Federation provider configuration. Required when `protocol = "ws_federation"`.
+    `signing_key` and `encryption_key` are certificate key pair names.
+    `attribute_mappings` creates WS-Federation property mappings and attaches
+    them; `property_mappings` references existing WS-Federation property
+    mapping IDs.
+  EOT
+  type = object({
+    reply_url                       = string
+    wtrealm                         = string
+    assertion_valid_not_before      = optional(string)
+    assertion_valid_not_on_or_after = optional(string)
+    authn_context_class_ref_mapping = optional(string)
+    digest_algorithm                = optional(string)
+    signature_algorithm             = optional(string)
+    signing_key                     = optional(string)
+    encryption_key                  = optional(string)
+    name_id_mapping                 = optional(string)
+    session_valid_not_on_or_after   = optional(string)
+    sign_assertion                  = optional(bool)
+    sign_logout_request             = optional(bool)
+    attribute_mappings = optional(list(object({
+      saml_name     = string
+      expression    = string
+      name          = optional(string)
+      friendly_name = optional(string)
+    })))
+    property_mappings = optional(list(string))
+  })
+  default = null
+}
+
+variable "microsoft_entra" {
+  description = <<-EOT
+    Microsoft Entra provider configuration. Required when `protocol = "microsoft_entra"`.
+    `user_mappings` / `group_mappings` create Entra property mappings;
+    `property_mappings` / `property_mappings_group` reference existing Entra
+    property mapping IDs.
+  EOT
+  type = object({
+    client_id                     = string
+    client_secret                 = string
+    tenant_id                     = string
+    dry_run                       = optional(bool)
+    exclude_users_service_account = optional(bool)
+    filter_group                  = optional(string)
+    group_delete_action           = optional(string)
+    user_delete_action            = optional(string)
+    sync_page_size                = optional(number)
+    sync_page_timeout             = optional(string)
+    user_mappings = optional(list(object({
+      name       = string
+      expression = string
+    })))
+    group_mappings = optional(list(object({
+      name       = string
+      expression = string
+    })))
+    property_mappings       = optional(list(string))
+    property_mappings_group = optional(list(string))
   })
   default = null
 }

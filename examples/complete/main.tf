@@ -1,4 +1,5 @@
-# Complete example: one OAuth2 app and one SAML app with SCIM backchannel.
+# Complete example: one OAuth2 app, one SAML app with SCIM backchannel, one
+# proxy app, and one LDAP app.
 #
 # Configure the provider via AUTHENTIK_URL and AUTHENTIK_TOKEN environment
 # variables (token from a superuser account).
@@ -63,5 +64,32 @@ module "jenkins" {
   scim = {
     url   = "https://jenkins.example.com/scim/v2"
     token = var.jenkins_scim_token
+  }
+}
+
+module "traefik" {
+  source = "../../"
+
+  name     = "Traefik forward auth"
+  slug     = "traefik"
+  protocol = "proxy"
+
+  proxy = {
+    external_host = "https://apps.example.com"
+    mode          = "forward_single"
+    internal_host = "http://traefik:80"
+    cookie_domain = ".example.com"
+  }
+}
+
+module "openldap" {
+  source = "../../"
+
+  name     = "OpenLDAP"
+  slug     = "openldap"
+  protocol = "ldap"
+
+  ldap = {
+    base_dn = "dc=apps,dc=example,dc=com"
   }
 }
