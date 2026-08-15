@@ -27,4 +27,4 @@ jobs:
           tflint_version: v0.64.0
 
       - name: Run pre-commit hooks
-        uses: pre-commit/action@v3.0.1
+        uses: j178/prek-action@v3.0.0
