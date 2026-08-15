@@ -3,7 +3,7 @@
 
 provider "registry.opentofu.org/goauthentik/authentik" {
   version     = "2026.5.1"
-  constraints = ">= 2024.4.0"
+  constraints = ">= 2026.4.0"
   hashes = [
     "h1:AZPcVy/MojsJtve3p74EvGWKrYKPS6O2mMlR9UZw44c=",
     "h1:BtUZ/JnMfWZIdWAZ75IQ8db/2YjkS6bn7IamZQxd0Tc=",
