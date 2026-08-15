@@ -1,0 +1,18 @@
+formatter: markdown
+
+header-from: docs/header.md
+footer-from: docs/footer.md
+
+sections:
+  hide:
+    - modules
+
+output:
+  method: replace
+  file: README.md
+
+settings:
+  anchor: true
+  html: true
+  hide-empty: true
+  indent: 2

@@ -1,0 +1,57 @@
+# --- Terraform ---------------------------------------------------------------
+
+# Local .terraform directories
+**/.terraform/*
+
+# State files (never commit)
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override / plan artifacts
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfplan
+*.tfplan.json
+plan.out
+
+# tfvars hold real values and are sensitive; the *.example templates are kept
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Local environment files that may contain AUTHENTIK_URL / AUTHENTIK_TOKEN
+.env
+.env.*
+!.env.example
+
+# Example lockfiles are regenerated on demand; only the root one is committed
+examples/**/.terraform.lock.hcl
+
+# --- Terragrunt (only relevant when Terragrunt runs against this repo) -------
+
+# Module source cache
+**/.terragrunt-cache/
+
+# Terragrunt provider lockfile
+terragrunt.lock.hcl
+
+# --- Editor / OS -------------------------------------------------------------
+
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# --- Logs --------------------------------------------------------------------
+
+*.log

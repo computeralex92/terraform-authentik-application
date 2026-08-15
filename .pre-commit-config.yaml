@@ -1,0 +1,45 @@
+# prek configuration for terraform-authentik-application.
+#
+# prek (https://prek.j178.dev) is a drop-in pre-commit replacement and reads
+# this standard pre-commit config. Your shell may alias `pre-commit` to `prek`.
+#
+# Install:  brew install prek && prek install
+# Run:      prek run --all-files
+#
+# The terraform hooks auto-detect the binary to use: `terraform` when present,
+# falling back to `tofu` (OpenTofu) otherwise. `terraform-docs`, `tflint`, and
+# prek itself must be installed (brew: terraform-docs, tflint, prek).
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args:
+          - --maxkb=512
+      - id: detect-private-key
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.108.1
+    hooks:
+      - id: terraform_fmt
+
+      - id: terraform_validate
+        args:
+          - --args=-no-color
+
+      # Only regenerate the root README (examples have no README and must not
+      # get one generated into them by this hook).
+      - id: terraform_docs
+        files: '^(main|variables|outputs|versions)\.tf$'
+        args:
+          - --args=--config=.terraform-docs.yml
+
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
