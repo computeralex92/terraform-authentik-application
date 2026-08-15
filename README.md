@@ -183,20 +183,20 @@ data "authentik_property_mapping_provider_scope" "openid" {
 ## Requirements
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
 | <a name="requirement_authentik"></a> [authentik](#requirement\_authentik) | >= 2026.4.0 |
 
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="provider_authentik"></a> [authentik](#provider\_authentik) | 2026.5.1 |
 
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
 | [authentik_application.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/application) | resource |
 | [authentik_property_mapping_provider_microsoft_entra.group](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_microsoft_entra) | resource |
 | [authentik_property_mapping_provider_microsoft_entra.user](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_microsoft_entra) | resource |
@@ -233,7 +233,7 @@ data "authentik_property_mapping_provider_scope" "openid" {
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_authentication_flow"></a> [authentication\_flow](#input\_authentication\_flow) | Slug of an optional authentication flow used by the provider (must exist in Authentik). | `string` | `null` | no |
 | <a name="input_authorization_flow"></a> [authorization\_flow](#input\_authorization\_flow) | Slug of the authorization flow used by the provider (must exist in Authentik). | `string` | `"default-provider-authorization-implicit-consent"` | no |
 | <a name="input_base_url"></a> [base\_url](#input\_base\_url) | Base URL of the Authentik instance (e.g. https://auth.example.com). Used to build derived URLs such as the SAML metadata URL in outputs. | `string` | `null` | no |
@@ -263,7 +263,7 @@ data "authentik_property_mapping_provider_scope" "openid" {
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_application_id"></a> [application\_id](#output\_application\_id) | ID of the created Authentik application. |
 | <a name="output_ldap"></a> [ldap](#output\_ldap) | LDAP provider details. `null` when `protocol` is not `ldap`. |
 | <a name="output_microsoft_entra"></a> [microsoft\_entra](#output\_microsoft\_entra) | Microsoft Entra provider details. `null` when `protocol` is not `microsoft_entra`. Sensitive because it includes the client secret. |
