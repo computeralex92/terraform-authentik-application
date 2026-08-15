@@ -50,7 +50,9 @@ Run in this order before pushing:
 2. `terraform validate`
 3. `tflint`
 
-The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu). `README.md` regeneration is handled by the `docs` workflow in CI, not locally.
+The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu).
+
+`README.md` regeneration is handled by the `docs` workflow in CI, not locally. Do **not** run `terraform-docs` locally to regenerate it: the workflow pins terraform-docs v0.20.0 (inside `terraform-docs/gh-actions@v1.4.1`), which formats the generated tables differently from newer local releases — running a newer version locally would re-introduce drift that CI then has to fix.
 
 ## Gotchas
 
