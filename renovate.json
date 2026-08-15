@@ -1,0 +1,67 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "after 8am and before 10pm every weekday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "extends": [
+      "schedule:monthly"
+    ],
+    "automerge": false
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "groupName": "pre-commit hooks"
+    },
+    {
+      "matchDatasources": [
+        "terraform-provider"
+      ],
+      "matchPackageNames": [
+        "goauthentik/authentik"
+      ],
+      "groupName": "authentik provider"
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "^\\.github/workflows/validate\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "https://github\\.com/terraform-docs/terraform-docs/releases/download/v(?<currentValue>[0-9.]+)/terraform-docs-v[0-9.]+-linux-amd64\\.tar\\.gz"
+      ],
+      "depNameTemplate": "terraform-docs/terraform-docs",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "fileMatch": [
+        "^\\.github/workflows/validate\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "https://github\\.com/terraform-linters/tflint/releases/download/v(?<currentValue>[0-9.]+)/tflint_linux_amd64\\.zip"
+      ],
+      "depNameTemplate": "terraform-linters/tflint",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
