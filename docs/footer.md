@@ -9,12 +9,11 @@
 
 ## Development
 
-Keep the generated tables in `README.md` in sync after changing code:
+The generated tables in `README.md` are kept in sync by the `docs` workflow, which runs `terraform-docs` on every PR and pushes the regenerated `README.md` back to the branch — no manual regeneration needed. Do not run `terraform-docs` locally: the workflow pins v0.20.0 (inside `terraform-docs/gh-actions@v1.4.1`), whose table formatting differs from newer releases. The `validate` workflow runs the remaining checks:
 
 ```bash
-terraform-docs markdown .        # regenerate README.md
 terraform fmt -recursive
 terraform validate
 tflint
-prek run --all-files            # everything above, plus trailing-whitespace/EOF/secret checks
+prek run --all-files            # trailing-whitespace/EOF/secret checks + fmt/validate/tflint
 ```
