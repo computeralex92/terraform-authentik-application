@@ -1,8 +1,8 @@
 # terraform-authentik-application
 
-Terraform module that wraps the [goauthentik/authentik](https://registry.terraform.io/providers/goauthentik/authentik) provider for managing **applications** in [Authentik](https://goauthentik.io), focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
+Terraform module that wraps the [goauthentik/authentik](https://registry.terraform.io/providers/goauthentik/authentik) provider for managing a single **application** in [Authentik](https://goauthentik.io), focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
 
-The module is meant to be consumed from a separate configuration repository that defines your application catalog. Each entry in the `applications` map creates:
+Use one module invocation per application (repeat the block with a unique module name per app) from a separate configuration repository that defines your application catalog. Each invocation creates:
 
 - an `authentik_provider_oauth2` **or** `authentik_provider_saml` (depending on `protocol`)
 - an optional `authentik_provider_scim` attached as a backchannel provider
@@ -26,64 +26,61 @@ provider "authentik" {
 
 ## Usage
 
+One module invocation per application:
+
 ```hcl
-module "authentik_apps" {
+module "grafana" {
   source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
 
   base_url = "https://auth.example.com"
 
-  default_flows = {
-    authorization = "default-provider-authorization-implicit-consent"
-    invalidation  = "default-provider-invalidation"
+  name            = "Grafana"
+  slug            = "grafana"
+  protocol        = "oauth2"
+  meta_launch_url = "https://grafana.example.com"
+
+  oauth2 = {
+    client_id             = "grafana"
+    client_secret         = var.grafana_client_secret
+    allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
+  }
+}
+
+module "jenkins" {
+  source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
+
+  base_url = "https://auth.example.com"
+
+  name     = "Jenkins"
+  slug     = "jenkins"
+  protocol = "saml"
+
+  saml = {
+    acs_url    = "https://jenkins.example.com/securityRealm/finishLogin"
+    audience   = "https://jenkins.example.com"
+    sp_binding = "post"
   }
 
-  applications = {
-    grafana = {
-      name            = "Grafana"
-      slug            = "grafana"
-      protocol        = "oauth2"
-      meta_launch_url = "https://grafana.example.com"
-
-      oauth2 = {
-        client_id             = "grafana"
-        client_secret         = var.grafana_client_secret
-        allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
-      }
-    }
-
-    jenkins = {
-      name     = "Jenkins"
-      slug     = "jenkins"
-      protocol = "saml"
-
-      saml = {
-        acs_url   = "https://jenkins.example.com/securityRealm/finishLogin"
-        audience  = "https://jenkins.example.com"
-        sp_binding = "post"
-      }
-
-      scim = {
-        url   = "https://jenkins.example.com/scim/v2"
-        token = var.jenkins_scim_token
-      }
-    }
+  scim = {
+    url   = "https://jenkins.example.com/scim/v2"
+    token = var.jenkins_scim_token
   }
 }
 ```
 
-OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) `applications` output, e.g.:
+OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) outputs, e.g.:
 
 ```hcl
-module.authentik_apps.applications["grafana"].oauth2.client_secret
-module.authentik_apps.applications["jenkins"].saml.metadata_url
+module.grafana.oauth2.client_secret
+module.jenkins.saml.metadata_url
 ```
 
 ## Terragrunt
 
-This is a plain Terraform module, so it can be consumed from [Terragrunt](https://terragrunt.gruntwork.io) just like any other module: point a `terragrunt.hcl` at the module source and pass the inputs. Terragrunt runs the module with the underlying `terraform` or `tofu` binary, so the module itself needs no Terragrunt-specific files.
+This is a plain Terraform module, so it can be consumed from [Terragrunt](https://terragrunt.gruntwork.io) just like any other module: point a `terragrunt.hcl` at the module source and pass the inputs. Terragrunt runs the module with the underlying `terraform` or `tofu` binary, so the module itself needs no Terragrunt-specific files. Use one `terragrunt.hcl` (directory) per application:
 
 ```hcl
-# terragrunt.hcl (in the consuming repo)
+# terragrunt.hcl (one per application, in the consuming repo)
 terraform {
   source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
 
@@ -94,17 +91,13 @@ terraform {
 inputs = {
   base_url = "https://auth.example.com"
 
-  applications = {
-    grafana = {
-      name     = "Grafana"
-      slug     = "grafana"
-      protocol = "oauth2"
+  name     = "Grafana"
+  slug     = "grafana"
+  protocol = "oauth2"
 
-      oauth2 = {
-        client_id             = "grafana"
-        allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
-      }
-    }
+  oauth2 = {
+    client_id             = "grafana"
+    allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
   }
 }
 ```
@@ -118,19 +111,20 @@ Notes for Terragrunt users:
 
 ## Inputs reference
 
-Each key in `applications` is a unique identifier for the app; each value configures one application. `protocol` selects the provider type and must be `oauth2` or `saml`, with the matching `oauth2`/`saml` provider block required. An optional `scim` block enables a SCIM backchannel provider so users/groups can be provisioned into the application.
+Each module invocation configures one application. `protocol` selects the provider type and must be `oauth2` or `saml`, with the matching `oauth2`/`saml` provider block required. Providing a `scim` block enables a SCIM backchannel provider so users/groups can be provisioned into the application; omit it to disable.
 
-Top-level application fields:
+Top-level fields:
 
 - `name`, `slug` — display name and unique slug (the slug is also the default OAuth `client_id`).
+- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** used by the provider (must exist in Authentik). Default to the standard Authentik flows.
 - `meta_launch_url`, `meta_icon`, `meta_description`, `meta_publisher` — dashboard metadata.
 - `meta_hide`, `open_in_new_tab`, `group`, `policy_engine_mode` — dashboard/launch behaviour.
+- `base_url` — base URL of the Authentik instance, used to build derived URLs such as the SAML metadata URL in outputs.
 
 OAuth2 provider block (`oauth2`):
 
 - `client_id` defaults to the app `slug`; `client_secret` is generated by Authentik if omitted.
 - `allowed_redirect_uris` accepts plain URLs (converted to `matching_mode = "strict"`) or full maps `{ matching_mode, url }`.
-- `authorization_flow`, `invalidation_flow`, `authentication_flow` are flow **slugs**, overriding `default_flows`.
 - `signing_key`, `encryption_key` are certificate key pair **names** resolved via the `authentik_certificate_key_pair` data source.
 - `scopes` creates scope mappings and attaches them to the provider; `property_mappings` references existing scope mapping IDs.
 
@@ -153,5 +147,3 @@ data "authentik_property_mapping_provider_scope" "openid" {
   managed = "goauthentik.io/providers/oauth2/scope-openid"
 }
 ```
-
-`default_flows` provides fallback flow **slugs** (`authorization`, `invalidation`, `authentication`) used when an application does not override them; the referenced flows must exist in Authentik. `base_url` is the base URL of the Authentik instance and is used to build derived URLs such as the SAML metadata URL in outputs.

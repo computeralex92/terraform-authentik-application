@@ -1,17 +1,19 @@
 # AGENTS.md
 
-Terraform module that wraps the `goauthentik/authentik` provider for managing Authentik **applications** via a single `applications` map, focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
+Terraform module that wraps the `goauthentik/authentik` provider for managing a single Authentik **application** per module invocation, focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
 
-The module is consumed from a separate configuration repo that defines the application catalog.
+The module is consumed from a separate configuration repo that defines the application catalog — one `module` block per application.
 
 ## Interface
 
-- `applications` (`map`) — the only required input. Each entry has `name`, `slug`, `protocol` (`oauth2`|`saml`), the matching `oauth2`/`saml` provider block, and an optional `scim` block.
-- `default_flows` — default flow slugs (authorization/invalidation/authentication), overridable per app.
+- `name`, `slug`, `protocol` (`oauth2`|`saml`) — required per invocation, plus the matching `oauth2`/`saml` provider block.
+- `oauth2` / `saml` — provider config blocks (exactly one, matching `protocol`).
+- `scim` — optional block; providing it enables a SCIM backchannel provider, omitting it disables SCIM.
+- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** (defaults to the standard Authentik flows).
 - `base_url` — optional; builds derived URLs (e.g. SAML metadata URL) in outputs.
-- Output `applications` is `sensitive = true` (contains client secrets + SCIM tokens).
+- Outputs: `application_id`, `provider_id`, and `oauth2` (sensitive), `saml`, `scim` (sensitive) — the latter `null` when not applicable.
 
-Per app the module creates: the protocol provider, optional SCIM backchannel provider, inline property mappings (OAuth scopes, SAML attributes, SCIM user/group mappings), and the `authentik_application`.
+Per invocation the module creates: the protocol provider, optional SCIM backchannel provider, inline property mappings (OAuth scopes, SAML attributes, SCIM user/group mappings), and the `authentik_application`.
 
 ## Layout
 

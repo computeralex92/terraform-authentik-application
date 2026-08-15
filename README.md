@@ -1,9 +1,9 @@
 <!-- BEGIN_TF_DOCS -->
 # terraform-authentik-application
 
-Terraform module that wraps the [goauthentik/authentik](https://registry.terraform.io/providers/goauthentik/authentik) provider for managing **applications** in [Authentik](https://goauthentik.io), focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
+Terraform module that wraps the [goauthentik/authentik](https://registry.terraform.io/providers/goauthentik/authentik) provider for managing a single **application** in [Authentik](https://goauthentik.io), focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
 
-The module is meant to be consumed from a separate configuration repository that defines your application catalog. Each entry in the `applications` map creates:
+Use one module invocation per application (repeat the block with a unique module name per app) from a separate configuration repository that defines your application catalog. Each invocation creates:
 
 - an `authentik_provider_oauth2` **or** `authentik_provider_saml` (depending on `protocol`)
 - an optional `authentik_provider_scim` attached as a backchannel provider
@@ -27,64 +27,61 @@ provider "authentik" {
 
 ## Usage
 
+One module invocation per application:
+
 ```hcl
-module "authentik_apps" {
+module "grafana" {
   source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
 
   base_url = "https://auth.example.com"
 
-  default_flows = {
-    authorization = "default-provider-authorization-implicit-consent"
-    invalidation  = "default-provider-invalidation"
+  name            = "Grafana"
+  slug            = "grafana"
+  protocol        = "oauth2"
+  meta_launch_url = "https://grafana.example.com"
+
+  oauth2 = {
+    client_id             = "grafana"
+    client_secret         = var.grafana_client_secret
+    allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
+  }
+}
+
+module "jenkins" {
+  source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
+
+  base_url = "https://auth.example.com"
+
+  name     = "Jenkins"
+  slug     = "jenkins"
+  protocol = "saml"
+
+  saml = {
+    acs_url    = "https://jenkins.example.com/securityRealm/finishLogin"
+    audience   = "https://jenkins.example.com"
+    sp_binding = "post"
   }
 
-  applications = {
-    grafana = {
-      name            = "Grafana"
-      slug            = "grafana"
-      protocol        = "oauth2"
-      meta_launch_url = "https://grafana.example.com"
-
-      oauth2 = {
-        client_id             = "grafana"
-        client_secret         = var.grafana_client_secret
-        allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
-      }
-    }
-
-    jenkins = {
-      name     = "Jenkins"
-      slug     = "jenkins"
-      protocol = "saml"
-
-      saml = {
-        acs_url   = "https://jenkins.example.com/securityRealm/finishLogin"
-        audience  = "https://jenkins.example.com"
-        sp_binding = "post"
-      }
-
-      scim = {
-        url   = "https://jenkins.example.com/scim/v2"
-        token = var.jenkins_scim_token
-      }
-    }
+  scim = {
+    url   = "https://jenkins.example.com/scim/v2"
+    token = var.jenkins_scim_token
   }
 }
 ```
 
-OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) `applications` output, e.g.:
+OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) outputs, e.g.:
 
 ```hcl
-module.authentik_apps.applications["grafana"].oauth2.client_secret
-module.authentik_apps.applications["jenkins"].saml.metadata_url
+module.grafana.oauth2.client_secret
+module.jenkins.saml.metadata_url
 ```
 
 ## Terragrunt
 
-This is a plain Terraform module, so it can be consumed from [Terragrunt](https://terragrunt.gruntwork.io) just like any other module: point a `terragrunt.hcl` at the module source and pass the inputs. Terragrunt runs the module with the underlying `terraform` or `tofu` binary, so the module itself needs no Terragrunt-specific files.
+This is a plain Terraform module, so it can be consumed from [Terragrunt](https://terragrunt.gruntwork.io) just like any other module: point a `terragrunt.hcl` at the module source and pass the inputs. Terragrunt runs the module with the underlying `terraform` or `tofu` binary, so the module itself needs no Terragrunt-specific files. Use one `terragrunt.hcl` (directory) per application:
 
 ```hcl
-# terragrunt.hcl (in the consuming repo)
+# terragrunt.hcl (one per application, in the consuming repo)
 terraform {
   source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
 
@@ -95,17 +92,13 @@ terraform {
 inputs = {
   base_url = "https://auth.example.com"
 
-  applications = {
-    grafana = {
-      name     = "Grafana"
-      slug     = "grafana"
-      protocol = "oauth2"
+  name     = "Grafana"
+  slug     = "grafana"
+  protocol = "oauth2"
 
-      oauth2 = {
-        client_id             = "grafana"
-        allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
-      }
-    }
+  oauth2 = {
+    client_id             = "grafana"
+    allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
   }
 }
 ```
@@ -119,19 +112,20 @@ Notes for Terragrunt users:
 
 ## Inputs reference
 
-Each key in `applications` is a unique identifier for the app; each value configures one application. `protocol` selects the provider type and must be `oauth2` or `saml`, with the matching `oauth2`/`saml` provider block required. An optional `scim` block enables a SCIM backchannel provider so users/groups can be provisioned into the application.
+Each module invocation configures one application. `protocol` selects the provider type and must be `oauth2` or `saml`, with the matching `oauth2`/`saml` provider block required. Providing a `scim` block enables a SCIM backchannel provider so users/groups can be provisioned into the application; omit it to disable.
 
-Top-level application fields:
+Top-level fields:
 
 - `name`, `slug` — display name and unique slug (the slug is also the default OAuth `client_id`).
+- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** used by the provider (must exist in Authentik). Default to the standard Authentik flows.
 - `meta_launch_url`, `meta_icon`, `meta_description`, `meta_publisher` — dashboard metadata.
 - `meta_hide`, `open_in_new_tab`, `group`, `policy_engine_mode` — dashboard/launch behaviour.
+- `base_url` — base URL of the Authentik instance, used to build derived URLs such as the SAML metadata URL in outputs.
 
 OAuth2 provider block (`oauth2`):
 
 - `client_id` defaults to the app `slug`; `client_secret` is generated by Authentik if omitted.
 - `allowed_redirect_uris` accepts plain URLs (converted to `matching_mode = "strict"`) or full maps `{ matching_mode, url }`.
-- `authorization_flow`, `invalidation_flow`, `authentication_flow` are flow **slugs**, overriding `default_flows`.
 - `signing_key`, `encryption_key` are certificate key pair **names** resolved via the `authentik_certificate_key_pair` data source.
 - `scopes` creates scope mappings and attaches them to the provider; `property_mappings` references existing scope mapping IDs.
 
@@ -154,8 +148,6 @@ data "authentik_property_mapping_provider_scope" "openid" {
   managed = "goauthentik.io/providers/oauth2/scope-openid"
 }
 ```
-
-`default_flows` provides fallback flow **slugs** (`authorization`, `invalidation`, `authentication`) used when an application does not override them; the referenced flows must exist in Authentik. `base_url` is the base URL of the Authentik instance and is used to build derived URLs such as the SAML metadata URL in outputs.
 
 ## Requirements
 
@@ -195,20 +187,39 @@ data "authentik_property_mapping_provider_scope" "openid" {
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_applications"></a> [applications](#input\_applications) | Map of Authentik applications to configure. Each map key is a unique<br/>identifier (usually the app slug); each value describes one application and<br/>its providers.<br/><br/>Set `protocol` to `oauth2` or `saml` and provide the matching provider<br/>block. An optional `scim` block adds a SCIM backchannel provider so<br/>users/groups can be provisioned into the application.<br/><br/>Property mappings (OAuth scopes, SAML attributes, SCIM user/group mappings)<br/>referenced via `property_mappings`/`property_mappings_group` must already<br/>exist in Authentik (resolve them with the corresponding `data.authentik_*`<br/>data sources in the calling configuration). Custom mappings defined inline<br/>(e.g. `oauth2.scopes`) are created by this module and attached to the<br/>provider. | <pre>map(object({<br/>    name               = string<br/>    slug               = string<br/>    protocol           = string # "oauth2" or "saml"<br/>    meta_launch_url    = optional(string)<br/>    meta_icon          = optional(string)<br/>    meta_description   = optional(string)<br/>    meta_publisher     = optional(string)<br/>    meta_hide          = optional(bool, false)<br/>    open_in_new_tab    = optional(bool, false)<br/>    group              = optional(string)<br/>    policy_engine_mode = optional(string, "any")<br/><br/>    oauth2 = optional(object({<br/>      client_id                  = optional(string)<br/>      client_secret              = optional(string)<br/>      client_type                = optional(string)<br/>      authorization_flow         = optional(string)<br/>      invalidation_flow          = optional(string)<br/>      authentication_flow        = optional(string)<br/>      allowed_redirect_uris      = optional(list(any))<br/>      grant_types                = optional(list(string))<br/>      access_code_validity       = optional(string)<br/>      access_token_validity      = optional(string)<br/>      refresh_token_validity     = optional(string)<br/>      refresh_token_threshold    = optional(string)<br/>      include_claims_in_id_token = optional(bool)<br/>      issuer_mode                = optional(string)<br/>      logout_method              = optional(string)<br/>      logout_uri                 = optional(string)<br/>      sub_mode                   = optional(string)<br/>      signing_key                = optional(string)<br/>      encryption_key             = optional(string)<br/>      scopes = optional(list(object({<br/>        scope_name  = string<br/>        expression  = string<br/>        description = optional(string)<br/>        name        = optional(string)<br/>      })))<br/>      property_mappings = optional(list(string))<br/>    }))<br/><br/>    saml = optional(object({<br/>      acs_url              = string<br/>      audience             = optional(string)<br/>      authorization_flow   = optional(string)<br/>      invalidation_flow    = optional(string)<br/>      authentication_flow  = optional(string)<br/>      sp_binding           = optional(string)<br/>      sls_url              = optional(string)<br/>      sls_binding          = optional(string)<br/>      signing_key          = optional(string)<br/>      encryption_key       = optional(string)<br/>      verification_key     = optional(string)<br/>      name_id_mapping      = optional(string)<br/>      digest_algorithm     = optional(string)<br/>      signature_algorithm  = optional(string)<br/>      sign_assertion       = optional(bool)<br/>      sign_response        = optional(bool)<br/>      sign_logout_request  = optional(bool)<br/>      sign_logout_response = optional(bool)<br/>      issuer_override      = optional(string)<br/>      default_relay_state  = optional(string)<br/>      attribute_mappings = optional(list(object({<br/>        saml_name     = string<br/>        expression    = string<br/>        name          = optional(string)<br/>        friendly_name = optional(string)<br/>      })))<br/>      property_mappings = optional(list(string))<br/>    }))<br/><br/>    scim = optional(object({<br/>      url                                   = string<br/>      name                                  = optional(string)<br/>      token                                 = optional(string)<br/>      auth_mode                             = optional(string)<br/>      auth_oauth                            = optional(string)<br/>      auth_oauth_params                     = optional(map(any))<br/>      compatibility_mode                    = optional(string)<br/>      dry_run                               = optional(bool)<br/>      exclude_users_service_account         = optional(bool)<br/>      group_filters                         = optional(list(string))<br/>      sync_page_size                        = optional(number)<br/>      service_provider_config_cache_timeout = optional(string)<br/>      sync_page_timeout                     = optional(string)<br/>      user_mappings = optional(list(object({<br/>        name       = string<br/>        expression = string<br/>      })))<br/>      group_mappings = optional(list(object({<br/>        name       = string<br/>        expression = string<br/>      })))<br/>      property_mappings       = optional(list(string))<br/>      property_mappings_group = optional(list(string))<br/>    }))<br/>  }))</pre> | n/a | yes |
+| <a name="input_authentication_flow"></a> [authentication\_flow](#input\_authentication\_flow) | Slug of an optional authentication flow used by the provider (must exist in Authentik). | `string` | `null` | no |
+| <a name="input_authorization_flow"></a> [authorization\_flow](#input\_authorization\_flow) | Slug of the authorization flow used by the provider (must exist in Authentik). | `string` | `"default-provider-authorization-implicit-consent"` | no |
 | <a name="input_base_url"></a> [base\_url](#input\_base\_url) | Base URL of the Authentik instance (e.g. https://auth.example.com). Used to build derived URLs such as the SAML metadata URL in outputs. | `string` | `null` | no |
-| <a name="input_default_flows"></a> [default\_flows](#input\_default\_flows) | Flow slugs used by providers when an application does not override them.<br/>These flows must exist in Authentik (the shipped defaults are used unless<br/>overridden). | <pre>object({<br/>    authorization  = optional(string, "default-provider-authorization-implicit-consent")<br/>    invalidation   = optional(string, "default-provider-invalidation")<br/>    authentication = optional(string)<br/>  })</pre> | `{}` | no |
+| <a name="input_group"></a> [group](#input\_group) | Application group for dashboard organization. | `string` | `null` | no |
+| <a name="input_invalidation_flow"></a> [invalidation\_flow](#input\_invalidation\_flow) | Slug of the invalidation flow used by the provider (must exist in Authentik). | `string` | `"default-provider-invalidation"` | no |
+| <a name="input_meta_description"></a> [meta\_description](#input\_meta\_description) | Short description of the application. | `string` | `null` | no |
+| <a name="input_meta_hide"></a> [meta\_hide](#input\_meta\_hide) | Hide the application from the Authentik dashboard. | `bool` | `false` | no |
+| <a name="input_meta_icon"></a> [meta\_icon](#input\_meta\_icon) | Icon URL for the application. | `string` | `null` | no |
+| <a name="input_meta_launch_url"></a> [meta\_launch\_url](#input\_meta\_launch\_url) | Launch URL for the application. | `string` | `null` | no |
+| <a name="input_meta_publisher"></a> [meta\_publisher](#input\_meta\_publisher) | Publisher name of the application. | `string` | `null` | no |
+| <a name="input_name"></a> [name](#input\_name) | Display name shown in the Authentik dashboard. | `string` | n/a | yes |
+| <a name="input_oauth2"></a> [oauth2](#input\_oauth2) | OAuth2 provider configuration. Required when `protocol = "oauth2"`. If<br/>`client_secret` is omitted, Authentik generates one. `signing_key` and<br/>`encryption_key` are certificate key pair names. `scopes` creates scope<br/>mappings and attaches them; `property_mappings` references existing scope<br/>mapping IDs. | <pre>object({<br/>    client_id                  = optional(string)<br/>    client_secret              = optional(string)<br/>    client_type                = optional(string)<br/>    allowed_redirect_uris      = optional(list(any))<br/>    grant_types                = optional(list(string))<br/>    access_code_validity       = optional(string)<br/>    access_token_validity      = optional(string)<br/>    refresh_token_validity     = optional(string)<br/>    refresh_token_threshold    = optional(string)<br/>    include_claims_in_id_token = optional(bool)<br/>    issuer_mode                = optional(string)<br/>    logout_method              = optional(string)<br/>    logout_uri                 = optional(string)<br/>    sub_mode                   = optional(string)<br/>    signing_key                = optional(string)<br/>    encryption_key             = optional(string)<br/>    scopes = optional(list(object({<br/>      scope_name  = string<br/>      expression  = string<br/>      description = optional(string)<br/>      name        = optional(string)<br/>    })))<br/>    property_mappings = optional(list(string))<br/>  })</pre> | `null` | no |
+| <a name="input_open_in_new_tab"></a> [open\_in\_new\_tab](#input\_open\_in\_new\_tab) | Open the application launch URL in a new tab. | `bool` | `false` | no |
+| <a name="input_policy_engine_mode"></a> [policy\_engine\_mode](#input\_policy\_engine\_mode) | Policy engine mode for the application. | `string` | `"any"` | no |
+| <a name="input_protocol"></a> [protocol](#input\_protocol) | Provider protocol: `oauth2` or `saml`. | `string` | n/a | yes |
+| <a name="input_saml"></a> [saml](#input\_saml) | SAML provider configuration. Required when `protocol = "saml"`. `signing_key`,<br/>`encryption_key`, and `verification_key` are certificate key pair names.<br/>`attribute_mappings` creates SAML property mappings and attaches them;<br/>`property_mappings` references existing SAML property mapping IDs. | <pre>object({<br/>    acs_url              = string<br/>    audience             = optional(string)<br/>    sp_binding           = optional(string)<br/>    sls_url              = optional(string)<br/>    sls_binding          = optional(string)<br/>    signing_key          = optional(string)<br/>    encryption_key       = optional(string)<br/>    verification_key     = optional(string)<br/>    name_id_mapping      = optional(string)<br/>    digest_algorithm     = optional(string)<br/>    signature_algorithm  = optional(string)<br/>    sign_assertion       = optional(bool)<br/>    sign_response        = optional(bool)<br/>    sign_logout_request  = optional(bool)<br/>    sign_logout_response = optional(bool)<br/>    issuer_override      = optional(string)<br/>    default_relay_state  = optional(string)<br/>    attribute_mappings = optional(list(object({<br/>      saml_name     = string<br/>      expression    = string<br/>      name          = optional(string)<br/>      friendly_name = optional(string)<br/>    })))<br/>    property_mappings = optional(list(string))<br/>  })</pre> | `null` | no |
+| <a name="input_scim"></a> [scim](#input\_scim) | SCIM backchannel provider configuration. Omit (or set to null) to disable;<br/>providing this block creates a SCIM provider and attaches it to the<br/>application as a backchannel provider so users/groups can be provisioned<br/>into the application. `token` is required unless `auth_mode = "oauth"`. | <pre>object({<br/>    url                                   = string<br/>    name                                  = optional(string)<br/>    token                                 = optional(string)<br/>    auth_mode                             = optional(string)<br/>    auth_oauth                            = optional(string)<br/>    auth_oauth_params                     = optional(map(any))<br/>    compatibility_mode                    = optional(string)<br/>    dry_run                               = optional(bool)<br/>    exclude_users_service_account         = optional(bool)<br/>    group_filters                         = optional(list(string))<br/>    sync_page_size                        = optional(number)<br/>    service_provider_config_cache_timeout = optional(string)<br/>    sync_page_timeout                     = optional(string)<br/>    user_mappings = optional(list(object({<br/>      name       = string<br/>      expression = string<br/>    })))<br/>    group_mappings = optional(list(object({<br/>      name       = string<br/>      expression = string<br/>    })))<br/>    property_mappings       = optional(list(string))<br/>    property_mappings_group = optional(list(string))<br/>  })</pre> | `null` | no |
+| <a name="input_slug"></a> [slug](#input\_slug) | Unique slug; also the default OAuth `client_id`. | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_applications"></a> [applications](#output\_applications) | Map of created applications keyed by the `applications` map key, containing<br/>the application ID, protocol, and provider-specific details. Sensitive<br/>because it includes OAuth client secrets and SCIM tokens. |
+| <a name="output_application_id"></a> [application\_id](#output\_application\_id) | ID of the created Authentik application. |
+| <a name="output_oauth2"></a> [oauth2](#output\_oauth2) | OAuth2 client details. `null` when `protocol` is not `oauth2`. Sensitive because it includes the client secret. |
+| <a name="output_provider_id"></a> [provider\_id](#output\_provider\_id) | ID of the created OAuth2 or SAML provider. |
+| <a name="output_saml"></a> [saml](#output\_saml) | SAML provider endpoints. `null` when `protocol` is not `saml`. |
+| <a name="output_scim"></a> [scim](#output\_scim) | SCIM backchannel provider details. `null` when SCIM is not configured. Sensitive because it includes the SCIM token. |
 
 ## Notes & Gotchas
 
 - `plan`/`apply` require a live, reachable Authentik instance — there is no offline path. `terraform validate` does not need one.
-- Flow slugs referenced in `default_flows` and per-app overrides are resolved via the `authentik_flow` data source and must exist before `plan`.
+- Flow slugs in `authorization_flow`, `invalidation_flow`, and `authentication_flow` are resolved via the `authentik_flow` data source and must exist before `plan`.
 - Authentik's API is eventually consistent and resources depend on each other (provider → application, property mappings → provider). These ordering constraints are captured by implicit references; do not remove them.
 - Property mapping names must be unique in Authentik. Inline mappings default their name to `scope_name`/`saml_name`; set an explicit `name` if you need to disambiguate.
 - The SAML `metadata_url` output is only populated when `base_url` is set.
@@ -226,3 +237,4 @@ tflint
 prek run --all-files            # everything above, plus trailing-whitespace/EOF/secret checks
 ```
 <!-- END_TF_DOCS -->
+
