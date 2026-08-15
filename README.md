@@ -237,4 +237,3 @@ tflint
 prek run --all-files            # everything above, plus trailing-whitespace/EOF/secret checks
 ```
 <!-- END_TF_DOCS -->
-
