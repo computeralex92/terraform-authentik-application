@@ -33,13 +33,6 @@ repos:
         args:
           - --args=-no-color
 
-      # Only regenerate the root README (examples have no README and must not
-      # get one generated into them by this hook).
-      - id: terraform_docs
-        files: '^(main|variables|outputs|versions)\.tf$'
-        args:
-          - --args=--config=.terraform-docs.yml
-
       - id: terraform_tflint
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
