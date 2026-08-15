@@ -1,19 +1,20 @@
 # AGENTS.md
 
-Terraform module that wraps the `goauthentik/authentik` provider for managing a single Authentik **application** per module invocation, focused on **OAuth2** and **SAML** providers with optional **SCIM** backchannel provisioning.
+Terraform module that wraps the `goauthentik/authentik` provider for managing a single Authentik **application** per module invocation, supporting **OAuth2**, **SAML**, **reverse proxy**, **LDAP**, **RADIUS**, **WS-Federation**, and **Microsoft Entra** providers with optional **SCIM** backchannel provisioning.
 
 The module is consumed from a separate configuration repo that defines the application catalog — one `module` block per application.
 
 ## Interface
 
-- `name`, `slug`, `protocol` (`oauth2`|`saml`) — required per invocation, plus the matching `oauth2`/`saml` provider block.
-- `oauth2` / `saml` — provider config blocks (exactly one, matching `protocol`).
+- `name`, `slug`, `protocol` (`oauth2`|`saml`|`proxy`|`ldap`|`radius`|`ws_federation`|`microsoft_entra`) — required per invocation, plus the matching provider block.
+- `oauth2` / `saml` / `proxy` / `ldap` / `radius` / `ws_federation` / `microsoft_entra` — provider config blocks (exactly one, matching `protocol`).
 - `scim` — optional block; providing it enables a SCIM backchannel provider, omitting it disables SCIM.
-- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** (defaults to the standard Authentik flows).
+- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** (defaults to the standard Authentik flows); not used by LDAP or Microsoft Entra.
+- `bind_flow`, `unbind_flow` — flow **slugs** used by the LDAP provider.
 - `base_url` — optional; builds derived URLs (e.g. SAML metadata URL) in outputs.
-- Outputs: `application_id`, `provider_id`, and `oauth2` (sensitive), `saml`, `scim` (sensitive) — the latter `null` when not applicable.
+- Outputs: `application_id`, `provider_id`, and per-protocol blocks — `oauth2` (sensitive), `saml`, `proxy`, `ldap`, `radius` (sensitive), `ws_federation`, `microsoft_entra` (sensitive), `scim` (sensitive) — each `null` when not applicable.
 
-Per invocation the module creates: the protocol provider, optional SCIM backchannel provider, inline property mappings (OAuth scopes, SAML attributes, SCIM user/group mappings), and the `authentik_application`.
+Per invocation the module creates: the protocol provider, optional SCIM backchannel provider, inline property mappings (OAuth/proxy scopes, SAML/WS-Fed attributes, RADIUS mappings, Entra user/group mappings, SCIM user/group mappings), and the `authentik_application`.
 
 ## Layout
 
@@ -28,7 +29,7 @@ Single root module (no submodules):
 - `.terraform.lock.hcl` — committed
 - `.tflint.hcl` — built-in rules only (the authentic provider ships no tflint ruleset plugin)
 - `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, docs, validation, linting
-- `examples/complete` — runnable OAuth2 + SAML + SCIM example
+- `examples/complete` — runnable OAuth2 + SAML + SCIM + proxy + LDAP example
 
 ## Provider
 

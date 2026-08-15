@@ -1,9 +1,6 @@
 locals {
-  oauth2_signing_key    = var.protocol == "oauth2" ? try(var.oauth2.signing_key, null) : null
-  oauth2_encryption_key = var.protocol == "oauth2" ? try(var.oauth2.encryption_key, null) : null
-  saml_signing_key      = var.protocol == "saml" ? try(var.saml.signing_key, null) : null
-  saml_encryption_key   = var.protocol == "saml" ? try(var.saml.encryption_key, null) : null
-  saml_verification_key = var.protocol == "saml" ? try(var.saml.verification_key, null) : null
+  uses_standard_flows      = contains(["oauth2", "saml", "proxy", "radius", "ws_federation"], var.protocol)
+  uses_authentication_flow = contains(["oauth2", "saml", "proxy", "ws_federation"], var.protocol)
 
   oauth2_property_mappings = concat(
     try(var.oauth2.property_mappings, []),
@@ -15,6 +12,31 @@ locals {
     authentik_property_mapping_provider_saml.this[*].id,
   )
 
+  proxy_property_mappings = concat(
+    try(var.proxy.property_mappings, []),
+    authentik_property_mapping_provider_scope.proxy[*].id,
+  )
+
+  radius_property_mappings = concat(
+    try(var.radius.property_mappings, []),
+    authentik_property_mapping_provider_radius.this[*].id,
+  )
+
+  ws_federation_property_mappings = concat(
+    try(var.ws_federation.property_mappings, []),
+    authentik_property_mapping_provider_saml.ws_federation[*].id,
+  )
+
+  entra_user_property_mappings = concat(
+    try(var.microsoft_entra.property_mappings, []),
+    authentik_property_mapping_provider_microsoft_entra.user[*].id,
+  )
+
+  entra_group_property_mappings = concat(
+    try(var.microsoft_entra.property_mappings_group, []),
+    authentik_property_mapping_provider_microsoft_entra.group[*].id,
+  )
+
   scim_user_property_mappings = concat(
     try(var.scim.property_mappings, []),
     authentik_property_mapping_provider_scim.user[*].id,
@@ -24,6 +46,16 @@ locals {
     try(var.scim.property_mappings_group, []),
     authentik_property_mapping_provider_scim.group[*].id,
   )
+
+  provider_id = one(concat(
+    authentik_provider_oauth2.this[*].id,
+    authentik_provider_saml.this[*].id,
+    authentik_provider_proxy.this[*].id,
+    authentik_provider_ldap.this[*].id,
+    authentik_provider_radius.this[*].id,
+    authentik_provider_ws_federation.this[*].id,
+    authentik_provider_microsoft_entra.this[*].id,
+  ))
 }
 
 # ---------------------------------------------------------------------------
@@ -31,41 +63,73 @@ locals {
 # ---------------------------------------------------------------------------
 
 data "authentik_flow" "authorization" {
-  slug = var.authorization_flow
+  count = local.uses_standard_flows ? 1 : 0
+  slug  = var.authorization_flow
 }
 
 data "authentik_flow" "invalidation" {
-  slug = var.invalidation_flow
+  count = local.uses_standard_flows ? 1 : 0
+  slug  = var.invalidation_flow
 }
 
 data "authentik_flow" "authentication" {
-  count = var.authentication_flow != null ? 1 : 0
+  count = local.uses_authentication_flow && var.authentication_flow != null ? 1 : 0
   slug  = var.authentication_flow
 }
 
+data "authentik_flow" "bind" {
+  count = var.protocol == "ldap" ? 1 : 0
+  slug  = var.bind_flow
+}
+
+data "authentik_flow" "unbind" {
+  count = var.protocol == "ldap" ? 1 : 0
+  slug  = var.unbind_flow
+}
+
 data "authentik_certificate_key_pair" "oauth2_signing" {
-  count = local.oauth2_signing_key != null ? 1 : 0
-  name  = local.oauth2_signing_key
+  count = var.protocol == "oauth2" && try(var.oauth2.signing_key, null) != null ? 1 : 0
+  name  = var.oauth2.signing_key
 }
 
 data "authentik_certificate_key_pair" "oauth2_encryption" {
-  count = local.oauth2_encryption_key != null ? 1 : 0
-  name  = local.oauth2_encryption_key
+  count = var.protocol == "oauth2" && try(var.oauth2.encryption_key, null) != null ? 1 : 0
+  name  = var.oauth2.encryption_key
 }
 
 data "authentik_certificate_key_pair" "saml_signing" {
-  count = local.saml_signing_key != null ? 1 : 0
-  name  = local.saml_signing_key
+  count = var.protocol == "saml" && try(var.saml.signing_key, null) != null ? 1 : 0
+  name  = var.saml.signing_key
 }
 
 data "authentik_certificate_key_pair" "saml_encryption" {
-  count = local.saml_encryption_key != null ? 1 : 0
-  name  = local.saml_encryption_key
+  count = var.protocol == "saml" && try(var.saml.encryption_key, null) != null ? 1 : 0
+  name  = var.saml.encryption_key
 }
 
 data "authentik_certificate_key_pair" "saml_verification" {
-  count = local.saml_verification_key != null ? 1 : 0
-  name  = local.saml_verification_key
+  count = var.protocol == "saml" && try(var.saml.verification_key, null) != null ? 1 : 0
+  name  = var.saml.verification_key
+}
+
+data "authentik_certificate_key_pair" "ldap_cert" {
+  count = var.protocol == "ldap" && try(var.ldap.certificate, null) != null ? 1 : 0
+  name  = var.ldap.certificate
+}
+
+data "authentik_certificate_key_pair" "radius_cert" {
+  count = var.protocol == "radius" && try(var.radius.certificate, null) != null ? 1 : 0
+  name  = var.radius.certificate
+}
+
+data "authentik_certificate_key_pair" "ws_fed_signing" {
+  count = var.protocol == "ws_federation" && try(var.ws_federation.signing_key, null) != null ? 1 : 0
+  name  = var.ws_federation.signing_key
+}
+
+data "authentik_certificate_key_pair" "ws_fed_encryption" {
+  count = var.protocol == "ws_federation" && try(var.ws_federation.encryption_key, null) != null ? 1 : 0
+  name  = var.ws_federation.encryption_key
 }
 
 # ---------------------------------------------------------------------------
@@ -80,12 +144,46 @@ resource "authentik_property_mapping_provider_scope" "this" {
   description = var.oauth2.scopes[count.index].description
 }
 
+resource "authentik_property_mapping_provider_scope" "proxy" {
+  count       = length(try(var.proxy.scopes, []))
+  name        = coalesce(try(var.proxy.scopes[count.index].name, null), var.proxy.scopes[count.index].scope_name)
+  scope_name  = var.proxy.scopes[count.index].scope_name
+  expression  = var.proxy.scopes[count.index].expression
+  description = var.proxy.scopes[count.index].description
+}
+
 resource "authentik_property_mapping_provider_saml" "this" {
   count         = length(try(var.saml.attribute_mappings, []))
   name          = coalesce(try(var.saml.attribute_mappings[count.index].name, null), var.saml.attribute_mappings[count.index].saml_name)
   saml_name     = var.saml.attribute_mappings[count.index].saml_name
   expression    = var.saml.attribute_mappings[count.index].expression
   friendly_name = var.saml.attribute_mappings[count.index].friendly_name
+}
+
+resource "authentik_property_mapping_provider_saml" "ws_federation" {
+  count         = length(try(var.ws_federation.attribute_mappings, []))
+  name          = coalesce(try(var.ws_federation.attribute_mappings[count.index].name, null), var.ws_federation.attribute_mappings[count.index].saml_name)
+  saml_name     = var.ws_federation.attribute_mappings[count.index].saml_name
+  expression    = var.ws_federation.attribute_mappings[count.index].expression
+  friendly_name = var.ws_federation.attribute_mappings[count.index].friendly_name
+}
+
+resource "authentik_property_mapping_provider_radius" "this" {
+  count      = length(try(var.radius.mappings, []))
+  name       = var.radius.mappings[count.index].name
+  expression = var.radius.mappings[count.index].expression
+}
+
+resource "authentik_property_mapping_provider_microsoft_entra" "user" {
+  count      = length(try(var.microsoft_entra.user_mappings, []))
+  name       = var.microsoft_entra.user_mappings[count.index].name
+  expression = var.microsoft_entra.user_mappings[count.index].expression
+}
+
+resource "authentik_property_mapping_provider_microsoft_entra" "group" {
+  count      = length(try(var.microsoft_entra.group_mappings, []))
+  name       = var.microsoft_entra.group_mappings[count.index].name
+  expression = var.microsoft_entra.group_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_scim" "user" {
@@ -112,8 +210,8 @@ resource "authentik_provider_oauth2" "this" {
   client_secret = var.oauth2.client_secret
   client_type   = var.oauth2.client_type
 
-  authorization_flow  = data.authentik_flow.authorization.id
-  invalidation_flow   = data.authentik_flow.invalidation.id
+  authorization_flow  = data.authentik_flow.authorization[0].id
+  invalidation_flow   = data.authentik_flow.invalidation[0].id
   authentication_flow = try(data.authentik_flow.authentication[0].id, null)
 
   allowed_redirect_uris = var.oauth2.allowed_redirect_uris == null ? null : [
@@ -143,8 +241,8 @@ resource "authentik_provider_saml" "this" {
   count = var.protocol == "saml" ? 1 : 0
 
   name                = var.name
-  authorization_flow  = data.authentik_flow.authorization.id
-  invalidation_flow   = data.authentik_flow.invalidation.id
+  authorization_flow  = data.authentik_flow.authorization[0].id
+  invalidation_flow   = data.authentik_flow.invalidation[0].id
   authentication_flow = try(data.authentik_flow.authentication[0].id, null)
 
   acs_url              = var.saml.acs_url
@@ -166,6 +264,110 @@ resource "authentik_provider_saml" "this" {
   default_relay_state  = var.saml.default_relay_state
 
   property_mappings = length(local.saml_property_mappings) > 0 ? local.saml_property_mappings : null
+}
+
+resource "authentik_provider_proxy" "this" {
+  count = var.protocol == "proxy" ? 1 : 0
+
+  name          = var.name
+  external_host = var.proxy.external_host
+  mode          = var.proxy.mode
+  internal_host = var.proxy.internal_host
+
+  authorization_flow  = data.authentik_flow.authorization[0].id
+  invalidation_flow   = data.authentik_flow.invalidation[0].id
+  authentication_flow = try(data.authentik_flow.authentication[0].id, null)
+
+  internal_host_ssl_validation  = var.proxy.internal_host_ssl_validation
+  intercept_header_auth         = var.proxy.intercept_header_auth
+  cookie_domain                 = var.proxy.cookie_domain
+  basic_auth_enabled            = var.proxy.basic_auth_enabled
+  basic_auth_username_attribute = var.proxy.basic_auth_username_attribute
+  basic_auth_password_attribute = var.proxy.basic_auth_password_attribute
+  access_token_validity         = var.proxy.access_token_validity
+  refresh_token_validity        = var.proxy.refresh_token_validity
+  skip_path_regex               = var.proxy.skip_path_regex
+  jwt_federation_providers      = var.proxy.jwt_federation_providers
+  jwt_federation_sources        = var.proxy.jwt_federation_sources
+
+  property_mappings = length(local.proxy_property_mappings) > 0 ? local.proxy_property_mappings : null
+}
+
+resource "authentik_provider_ldap" "this" {
+  count = var.protocol == "ldap" ? 1 : 0
+
+  name             = var.name
+  base_dn          = var.ldap.base_dn
+  bind_flow        = data.authentik_flow.bind[0].id
+  unbind_flow      = data.authentik_flow.unbind[0].id
+  bind_mode        = var.ldap.bind_mode
+  search_mode      = var.ldap.search_mode
+  certificate      = try(data.authentik_certificate_key_pair.ldap_cert[0].id, null)
+  mfa_support      = var.ldap.mfa_support
+  tls_server_name  = var.ldap.tls_server_name
+  gid_start_number = var.ldap.gid_start_number
+  uid_start_number = var.ldap.uid_start_number
+}
+
+resource "authentik_provider_radius" "this" {
+  count = var.protocol == "radius" ? 1 : 0
+
+  name            = var.name
+  shared_secret   = var.radius.shared_secret
+  client_networks = var.radius.client_networks
+  certificate     = try(data.authentik_certificate_key_pair.radius_cert[0].id, null)
+  mfa_support     = var.radius.mfa_support
+
+  authorization_flow = data.authentik_flow.authorization[0].id
+  invalidation_flow  = data.authentik_flow.invalidation[0].id
+
+  property_mappings = length(local.radius_property_mappings) > 0 ? local.radius_property_mappings : null
+}
+
+resource "authentik_provider_ws_federation" "this" {
+  count = var.protocol == "ws_federation" ? 1 : 0
+
+  name      = var.name
+  reply_url = var.ws_federation.reply_url
+  wtrealm   = var.ws_federation.wtrealm
+
+  authorization_flow  = data.authentik_flow.authorization[0].id
+  invalidation_flow   = data.authentik_flow.invalidation[0].id
+  authentication_flow = try(data.authentik_flow.authentication[0].id, null)
+
+  assertion_valid_not_before      = var.ws_federation.assertion_valid_not_before
+  assertion_valid_not_on_or_after = var.ws_federation.assertion_valid_not_on_or_after
+  authn_context_class_ref_mapping = var.ws_federation.authn_context_class_ref_mapping
+  digest_algorithm                = var.ws_federation.digest_algorithm
+  signature_algorithm             = var.ws_federation.signature_algorithm
+  signing_kp                      = try(data.authentik_certificate_key_pair.ws_fed_signing[0].id, null)
+  encryption_kp                   = try(data.authentik_certificate_key_pair.ws_fed_encryption[0].id, null)
+  name_id_mapping                 = var.ws_federation.name_id_mapping
+  session_valid_not_on_or_after   = var.ws_federation.session_valid_not_on_or_after
+  sign_assertion                  = var.ws_federation.sign_assertion
+  sign_logout_request             = var.ws_federation.sign_logout_request
+
+  property_mappings = length(local.ws_federation_property_mappings) > 0 ? local.ws_federation_property_mappings : null
+}
+
+resource "authentik_provider_microsoft_entra" "this" {
+  count = var.protocol == "microsoft_entra" ? 1 : 0
+
+  name          = var.name
+  client_id     = var.microsoft_entra.client_id
+  client_secret = var.microsoft_entra.client_secret
+  tenant_id     = var.microsoft_entra.tenant_id
+
+  dry_run                       = var.microsoft_entra.dry_run
+  exclude_users_service_account = var.microsoft_entra.exclude_users_service_account
+  filter_group                  = var.microsoft_entra.filter_group
+  group_delete_action           = var.microsoft_entra.group_delete_action
+  user_delete_action            = var.microsoft_entra.user_delete_action
+  sync_page_size                = var.microsoft_entra.sync_page_size
+  sync_page_timeout             = var.microsoft_entra.sync_page_timeout
+
+  property_mappings       = length(local.entra_user_property_mappings) > 0 ? local.entra_user_property_mappings : null
+  property_mappings_group = length(local.entra_group_property_mappings) > 0 ? local.entra_group_property_mappings : null
 }
 
 resource "authentik_provider_scim" "this" {
@@ -198,7 +400,7 @@ resource "authentik_application" "this" {
   name = var.name
   slug = var.slug
 
-  protocol_provider = var.protocol == "oauth2" ? authentik_provider_oauth2.this[0].id : authentik_provider_saml.this[0].id
+  protocol_provider = local.provider_id
 
   backchannel_providers = var.scim != null ? [authentik_provider_scim.this[0].id] : null
 
