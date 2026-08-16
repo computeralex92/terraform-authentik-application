@@ -28,7 +28,7 @@ output "freeradius_shared_secret" {
 
 output "wsfed_app_reply_url" {
   description = "WS-Federation app reply URL."
-  value       = module.wsfed-app.ws_federation.reply_url
+  value       = module.wsfed_app.ws_federation.reply_url
 }
 
 output "office365_client_id" {

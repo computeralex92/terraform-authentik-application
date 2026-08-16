@@ -108,7 +108,7 @@ module "freeradius" {
   }
 }
 
-module "wsfed-app" {
+module "wsfed_app" {
   source = "../../"
 
   name     = "WS-Federation app"

@@ -38,7 +38,6 @@ resource "tls_private_key" "app" {
 
 resource "tls_self_signed_cert" "app" {
   for_each        = local.cert_names
-  key_algorithm   = "ECDSA"
   private_key_pem = tls_private_key.app[each.key].private_key_pem
 
   subject {
