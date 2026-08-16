@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars and fill in real values.
+# AUTHENTIK_URL and AUTHENTIK_TOKEN must be set in the environment.
+
+oauth2_client_secret = "change-me"
+scim_token           = "change-me"
+radius_shared_secret = "change-me"
+entra_client_secret  = "change-me"
+entra_tenant_id      = "00000000-0000-0000-0000-000000000000"

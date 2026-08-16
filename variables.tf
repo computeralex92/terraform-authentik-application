@@ -6,6 +6,10 @@ variable "name" {
 variable "slug" {
   description = "Unique slug; also the default OAuth `client_id`."
   type        = string
+  validation {
+    condition     = can(regex("^[-a-zA-Z0-9_]+$", var.slug))
+    error_message = "`slug` must match Authentik's slug format: letters, digits, hyphens, and underscores only."
+  }
 }
 
 variable "protocol" {
@@ -34,6 +38,10 @@ variable "base_url" {
   description = "Base URL of the Authentik instance (e.g. https://auth.example.com). Used to build derived URLs such as the SAML metadata URL in outputs."
   type        = string
   default     = null
+  validation {
+    condition     = var.base_url == null || can(regex("^https?://", var.base_url))
+    error_message = "`base_url` must be an absolute http(s) URL (e.g. https://auth.example.com)."
+  }
 }
 
 variable "meta_launch_url" {

@@ -19,3 +19,19 @@ output "jenkins_scim_token" {
   value       = module.jenkins.scim.token
   sensitive   = true
 }
+
+output "freeradius_shared_secret" {
+  description = "FreeRADIUS shared secret."
+  value       = module.freeradius.radius.shared_secret
+  sensitive   = true
+}
+
+output "wsfed_app_reply_url" {
+  description = "WS-Federation app reply URL."
+  value       = module.wsfed-app.ws_federation.reply_url
+}
+
+output "office365_client_id" {
+  description = "Office 365 Microsoft Entra client ID."
+  value       = module.office365.microsoft_entra.client_id
+}

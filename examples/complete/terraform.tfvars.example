@@ -3,3 +3,6 @@
 
 grafana_client_secret = "change-me"
 jenkins_scim_token    = "change-me"
+radius_shared_secret  = "change-me"
+entra_client_secret   = "change-me"
+entra_tenant_id       = "00000000-0000-0000-0000-000000000000"

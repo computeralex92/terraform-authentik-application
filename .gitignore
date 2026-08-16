@@ -32,8 +32,9 @@ plan.out
 .env.*
 !.env.example
 
-# Example lockfiles are regenerated on demand; only the root one is committed
-examples/**/.terraform.lock.hcl
+# Provider lockfiles: modules must not pin providers — the consuming root
+# module owns its own lock file
+.terraform.lock.hcl
 
 # --- Terragrunt (only relevant when Terragrunt runs against this repo) -------
 
