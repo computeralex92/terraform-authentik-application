@@ -18,7 +18,7 @@
 
 Disclose whether AI was used to author this PR or its commits:
 
-- [ ] Authored with AI assistance (opencode) — the PR is labeled `opencode` and its commits carry a `Co-authored-by: opencode <noreply@opencode.ai>` trailer.
+- [ ] Authored with AI assistance — the PR is labeled `ai-authored` and its commits carry a `Co-authored-by: <tool> <email>` trailer naming the tool used (e.g. opencode, Copilot, Claude Code).
 - [ ] Authored without AI assistance.
 
 ## Verification

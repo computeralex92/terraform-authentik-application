@@ -59,10 +59,10 @@ The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-comm
 
 ## AI authorship
 
-Commits and PRs authored with AI assistance (opencode) must be marked so reviewers can triage them without bypassing the branch-protection rules:
+Commits and PRs authored with AI assistance (opencode, Copilot, Claude Code, or any other tool) must be marked so reviewers can triage them without bypassing the branch-protection rules:
 
-- AI-authored commits end with the trailer `Co-authored-by: opencode <noreply@opencode.ai>` (GitHub renders it as a co-author).
-- AI-authored PRs are labeled `opencode` (create with `gh pr create --label opencode`) and the PR body notes AI authorship.
+- AI-authored commits end with a `Co-authored-by: <tool> <email>` trailer naming the tool (GitHub renders it as a co-author), e.g. `Co-authored-by: opencode <noreply@opencode.ai>`.
+- AI-authored PRs are labeled `ai-authored` (create with `gh pr create --label ai-authored`) and the PR body notes which tool was used.
 - PRs opened from the web UI must tick the "AI assistance" disclosure in `.github/PULL_REQUEST_TEMPLATE.md`.
 - Human-authored commits/PRs leave all of the above unset.
 
