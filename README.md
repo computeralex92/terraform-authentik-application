@@ -33,33 +33,22 @@ Each `protocol` value maps to one provider type in Authentik:
 
 > **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. The Enterprise-only providers are covered by static validation (`tofu fmt`/`validate`, `tflint`) only and have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires an Enterprise license.
 
-## Provider setup
+## Quick start
 
-The provider version must track the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`). This module only sets a lower bound; **pin the exact provider version in the consuming configuration** to match your server. The `>= 1.9.0` Terraform constraint is satisfied by both Terraform 1.9+ and the corresponding OpenTofu releases (OpenTofu 1.9 and later).
-
-Configure the provider in the consuming root module via the `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` environment variables (token from a superuser account). Never hardcode tokens in code.
+Configure the provider in the consuming root module via the `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` environment variables (token from a superuser account). Never hardcode tokens in code. Pin the provider version to the Authentik server version you target — this module only sets a lower bound.
 
 ```hcl
 # In the consuming root module
 provider "authentik" {
   # AUTHENTIK_URL and AUTHENTIK_TOKEN are read from the environment
 }
-```
 
-## Usage
-
-One module invocation per application:
-
-```hcl
 module "grafana" {
   source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
 
-  base_url = "https://auth.example.com"
-
-  name            = "Grafana"
-  slug            = "grafana"
-  protocol        = "oauth2"
-  meta_launch_url = "https://grafana.example.com"
+  name     = "Grafana"
+  slug     = "grafana"
+  protocol = "oauth2"
 
   oauth2 = {
     client_id             = "grafana"
@@ -67,39 +56,13 @@ module "grafana" {
     allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
   }
 }
-
-module "jenkins" {
-  source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
-
-  base_url = "https://auth.example.com"
-
-  name     = "Jenkins"
-  slug     = "jenkins"
-  protocol = "saml"
-
-  saml = {
-    acs_url    = "https://jenkins.example.com/securityRealm/finishLogin"
-    audience   = "https://jenkins.example.com"
-    sp_binding = "post"
-  }
-
-  scim = {
-    url   = "https://jenkins.example.com/scim/v2"
-    token = var.jenkins_scim_token
-  }
-}
 ```
 
-OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) outputs, e.g.:
-
-```hcl
-module.grafana.oauth2.client_secret
-module.jenkins.saml.metadata_url
-```
+OAuth client IDs/secrets and SCIM tokens are available from the (sensitive) outputs, e.g. `module.grafana.oauth2.client_secret`.
 
 ## Examples
 
-Ready-to-run examples live in the `examples/` directory. Each expects `AUTHENTIK_URL` / `AUTHENTIK_TOKEN` in the environment and ships a `terraform.tfvars.example` to copy to `terraform.tfvars`:
+Ready-to-run examples live in the `examples/` directory, each with its own README and a `terraform.tfvars.example` to copy to `terraform.tfvars`:
 
 | Directory | Contents |
 |---|---|
@@ -108,40 +71,6 @@ Ready-to-run examples live in the `examples/` directory. Each expects `AUTHENTIK
 | [`examples/advanced`](examples/advanced) | Kitchen-sink: self-generated signing/encryption key pairs (`tls` provider), inline property mappings, provider tuning options, RAC endpoints, and a SCIM backchannel |
 
 `examples/minimal` is the quickest first run; `examples/complete` is the best starting point for catalog-style usage; `examples/advanced` shows every option the module exposes.
-
-## Terragrunt
-
-This is a plain Terraform module, so it can be consumed from [Terragrunt](https://terragrunt.gruntwork.io) just like any other module: point a `terragrunt.hcl` at the module source and pass the inputs. Terragrunt runs the module with the underlying `terraform` or `tofu` binary, so the module itself needs no Terragrunt-specific files. Use one `terragrunt.hcl` (directory) per application:
-
-```hcl
-# terragrunt.hcl (one per application, in the consuming repo)
-terraform {
-  source = "git::https://github.com/computeralex92/terraform-authentik-application.git?ref=v1.0.0"
-
-  # optional: use OpenTofu instead of Terraform
-  # terraform_binary = "tofu"
-}
-
-inputs = {
-  base_url = "https://auth.example.com"
-
-  name     = "Grafana"
-  slug     = "grafana"
-  protocol = "oauth2"
-
-  oauth2 = {
-    client_id             = "grafana"
-    allowed_redirect_uris = ["https://grafana.example.com/login/generic_oauth"]
-  }
-}
-```
-
-Notes for Terragrunt users:
-
-- Auth is unchanged: set `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` in the environment — Terragrunt passes them through to OpenTofu/Terraform.
-- The module's `required_version` and provider constraints are enforced by the underlying binary; pin the provider to the Authentik server version as usual.
-- Terragrunt fetches the module source into its `.terragrunt-cache`; the module is stateless, so running from cache needs no extra hooks or files.
-- The module commits no `.terraform.lock.hcl`; the consuming repo manages its own lock files (`terraform.lock.hcl` and, for newer Terragrunt, `terragrunt.lock.hcl`) as normal.
 
 ## Versioning
 
@@ -153,99 +82,12 @@ The module follows [Semantic Versioning](https://semver.org) with `vX.Y.Z` tags.
 
 Releases are cut from `main` after the relevant PRs are merged. Feature additions that rely on newer Authentik provider attributes should also raise the provider lower bound in `versions.tf` and note the minimum Authentik version in the release notes.
 
-## Inputs reference
+## Further documentation
 
-Each module invocation configures one application. `protocol` selects the provider type and must be one of `oauth2`, `saml`, `proxy`, `ldap`, `radius`, `ws_federation`, `microsoft_entra`, `google_workspace`, `rac`, or `ssf`, with the matching provider block required. Providing a `scim` block enables a SCIM backchannel provider so users/groups can be provisioned into the application; omit it to disable.
-
-Top-level fields:
-
-- `name`, `slug` — display name and unique slug (the slug is also the default OAuth `client_id`).
-- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** used by the provider (must exist in Authentik). Default to the standard Authentik flows. Not used by LDAP (which uses `bind_flow`/`unbind_flow`) or by the provisioning/SSF providers (Microsoft Entra, Google Workspace, SSF), which use no flows. RAC uses `authorization_flow` and optionally `authentication_flow`, but no invalidation flow.
-- `bind_flow`, `unbind_flow` — flow **slugs** used by the LDAP provider (must exist in Authentik).
-- `meta_launch_url`, `meta_icon`, `meta_description`, `meta_publisher` — dashboard metadata.
-- `meta_hide`, `open_in_new_tab`, `group`, `policy_engine_mode` — dashboard/launch behaviour.
-- `base_url` — base URL of the Authentik instance, used to build derived URLs such as the SAML metadata URL in outputs. Distinct from Authentik's own Base URL system setting (`AUTHENTIK_WEB__BASE_URL`), which will become required in Authentik 2026.11.
-
-OAuth2 provider block (`oauth2`):
-
-- `client_id` defaults to the app `slug`; `client_secret` is generated by Authentik if omitted.
-- `allowed_redirect_uris` accepts plain URLs (converted to `matching_mode = "strict"` and `redirect_uri_type = "authorization"`) or full maps `{ matching_mode, redirect_uri_type, url }`.
-- `signing_key`, `encryption_key` are certificate key pair **names** resolved via the `authentik_certificate_key_pair` data source.
-- `grant_types` controls the supported flows; add `token_exchange` (Authentik 2026.8+) to enable OAuth 2.0 token exchange, and list trusted peers in `jwt_federation_providers` / `jwt_federation_sources`.
-- `scopes` creates scope mappings and attaches them to the provider; `property_mappings` references existing scope mapping IDs.
-
-SAML provider block (`saml`):
-
-- `acs_url` is required; `audience`, `sp_binding`, `sls_url`, `sls_binding` configure the service provider.
-- `signing_key`, `encryption_key`, `verification_key` are certificate key pair **names**.
-- `name_id_mapping` is the ID of the property mapping used for the NameID.
-- `assertion_valid_not_before` / `assertion_valid_not_on_or_after`, `session_valid_not_on_or_after`, `logout_method` (`frontchannel_iframe` / `frontchannel_native` / `backchannel`), and `authn_context_class_ref_mapping` tune assertion/session behaviour.
-- `attribute_mappings` creates SAML property mappings and attaches them; `property_mappings` references existing SAML property mapping IDs.
-
-Reverse proxy provider block (`proxy`):
-
-- `external_host` is required; `mode` is `proxy`, `forward_single`, or `forward_domain`.
-- `internal_host`, `internal_host_ssl_validation`, `intercept_header_auth`, `cookie_domain` configure the upstream.
-- `basic_auth_*` enables and configures HTTP basic auth.
-- `scopes` creates scope mappings and attaches them; `property_mappings` references existing scope mapping IDs.
-
-LDAP provider block (`ldap`):
-
-- `base_dn` is required; `bind_mode`/`search_mode` select the bind/search strategy.
-- `certificate` is a certificate key pair **name**.
-- `bind_flow`/`unbind_flow` come from the top-level variables.
-
-RADIUS provider block (`radius`):
-
-- `shared_secret` is required; `client_networks` restricts allowed RADIUS clients (defaults to `0.0.0.0/0, ::/0`).
-- `certificate` is a certificate key pair **name**.
-- `mappings` creates RADIUS property mappings and attaches them; `property_mappings` references existing RADIUS property mapping IDs.
-
-WS-Federation provider block (`ws_federation`):
-
-- `reply_url` and `wtrealm` are required.
-- `signing_key`, `encryption_key` are certificate key pair **names**.
-- `attribute_mappings` creates property mappings and attaches them; `property_mappings` references existing property mapping IDs.
-- Requires an [Authentik Enterprise license](https://goauthentik.io/pricing/); see [Supported protocols](#supported-protocols).
-
-Microsoft Entra provider block (`microsoft_entra`):
-
-- `client_id`, `client_secret`, and `tenant_id` are required.
-- `user_mappings` / `group_mappings` create Entra property mappings; `property_mappings` / `property_mappings_group` reference existing Entra property mapping IDs.
-- Requires an [Authentik Enterprise license](https://goauthentik.io/pricing/); see [Supported protocols](#supported-protocols).
-
-Google Workspace provider block (`google_workspace`):
-
-- `default_group_email_domain` is required; `credentials` is a service-account JSON object (json-encoded).
-- `delegated_subject`, `dry_run`, `exclude_users_service_account`, `filter_group`, and the `*_delete_action` / `sync_*` options tune the sync.
-- `user_mappings` / `group_mappings` create Google Workspace property mappings; `property_mappings` / `property_mappings_group` reference existing ones.
-- Requires an [Authentik Enterprise license](https://goauthentik.io/pricing/); see [Supported protocols](#supported-protocols).
-
-RAC provider block (`rac`):
-
-- `endpoints` lists the remote machines (`name`, `host`, `protocol` of `rdp`/`vnc`/`ssh`, plus optional `maximum_connections`, `settings`, and `property_mappings`).
-- `mappings` creates RAC property mappings and attaches them; `property_mappings` references existing RAC property mapping IDs.
-- `connection_expiry` and `settings` tune the provider; uses `authorization_flow` (and optionally `authentication_flow`).
-- Requires an [Authentik Enterprise license](https://goauthentik.io/pricing/); see [Supported protocols](#supported-protocols).
-
-SSF provider block (`ssf`):
-
-- `event_retention`, `signing_key` (a certificate key pair **name**), `jwt_federation_providers`, and `push_verify_certificates` configure the provider.
-- Requires an [Authentik Enterprise license](https://goauthentik.io/pricing/); see [Supported protocols](#supported-protocols).
-
-SCIM provider block (`scim`):
-
-- `url` is required; `token` is required unless `auth_mode = "oauth"`, in which case `auth_oauth` (the slug of an existing OAuth source) is required.
-- `compatibility_mode` selects vendor-specific behavior (e.g. `aws`, `slack`, and, from Authentik 2026.8, `gitlab`).
-- `user_mappings` / `group_mappings` create SCIM property mappings; `property_mappings` / `property_mappings_group` reference existing SCIM property mapping IDs.
-
-When no `property_mappings` / `property_mappings_group` (or inline mappings) are provided, the provider field is left unset and Authentik applies its default user/group mappings. When attaching existing mappings, resolve them with the matching `data.authentik_property_mapping_*` data source in the calling configuration, for example:
-
-```hcl
-data "authentik_property_mapping_provider_scope" "openid" {
-  managed = "goauthentik.io/providers/oauth2/scope-openid"
-}
-```
+- [Provider reference](docs/protocols.md) — semantics of every input block, per protocol.
+- [Terragrunt](docs/terragrunt.md) — consuming the module from Terragrunt.
+- [Contributing](CONTRIBUTING.md) — development setup, README regeneration, and versioning.
+- [Security](SECURITY.md) — how to report vulnerabilities.
 
 ## Requirements
 
@@ -258,7 +100,7 @@ data "authentik_property_mapping_provider_scope" "openid" {
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | >= 2026.4.0 |
+| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | 2026.5.1 |
 
 ## Resources
 
@@ -364,15 +206,4 @@ data "authentik_property_mapping_provider_scope" "openid" {
 - Property mapping names must be unique in Authentik. Inline mappings default their name to `scope_name`/`saml_name`; set an explicit `name` if you need to disambiguate.
 - The SAML `metadata_url` output is only populated when `base_url` is set.
 - Secrets (OAuth `client_secret`, RADIUS `shared_secret`, Entra `client_secret`, SCIM `token`) are managed in state. Restrict access to state files and never log the sensitive outputs.
-
-## Development
-
-The generated tables in `README.md` are kept in sync by two mechanisms. The `docs` workflow runs terraform-docs from a pinned docker image on every PR and pushes the regenerated `README.md` back to the branch; the image version is managed by Renovate. A local `terraform_docs` pre-commit hook regenerates `README.md` with your system-installed terraform-docs — if that version differs from the CI pin, the formatting may differ and CI will push its own formatting back, so don't fight it. The `validate` workflow runs the remaining checks (and skips `terraform_docs`):
-
-```bash
-terraform fmt -recursive
-terraform validate
-tflint
-prek run --all-files            # trailing-whitespace/EOF/secret checks + fmt/validate/tflint/docs
-```
 <!-- END_TF_DOCS -->
