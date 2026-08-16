@@ -29,8 +29,8 @@ Single root module (no submodules):
 - `.terraform-docs.yml` — terraform-docs config (`output.method: replace`)
 - `docs/header.md`, `docs/footer.md` — narrative sections assembled into `README.md`
 - `.tflint.hcl` — built-in rules only (the authentic provider ships no tflint ruleset plugin)
-- `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, validation, linting (docs generation moved to CI)
-- `.github/workflows/` — `validate.yml` (fmt/validate/tflint via pre-commit + OpenTofu) and `docs.yml` (terraform-docs regeneration, pushed back to the PR branch)
+- `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, validation, linting, and local docs generation (`terraform_docs` uses the system terraform-docs; CI uses a pinned image)
+- `.github/workflows/` — `validate.yml` (fmt/validate/tflint via pre-commit + OpenTofu; skips `terraform_docs`), `docs.yml` (terraform-docs via pinned docker image, pushed back to the PR branch), plus `sast.yml` and `release.yml`
 - `examples/minimal` — minimal single OAuth2 app
 - `examples/complete` — one app per supported protocol (OAuth2 + SAML + SCIM + proxy + LDAP + RADIUS + WS-Federation + Microsoft Entra)
 - `examples/advanced` — kitchen-sink: self-generated key pairs (tls provider), inline property mappings, provider tuning, SCIM backchannel
@@ -63,9 +63,12 @@ Run in this order before pushing:
 2. `terraform validate`
 3. `tflint`
 
-The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu).
+The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu). The `terraform_docs` hook requires `terraform-docs` to be installed (`brew install terraform-docs`).
 
-`README.md` regeneration is handled by the `docs` workflow in CI, not locally. Do **not** run `terraform-docs` locally to regenerate it: the workflow pins terraform-docs v0.20.0 (inside `terraform-docs/gh-actions@v1.4.1`), which formats the generated tables differently from newer local releases — running a newer version locally would re-introduce drift that CI then has to fix.
+`README.md` regeneration is handled in two complementary places:
+
+- The `docs` workflow (`.github/workflows/docs.yml`) regenerates it on every PR with the **pinned** terraform-docs docker image and pushes the result back to the branch. The image tag is managed by Renovate (custom manager in `renovate.json`); bump it there, not by hand.
+- A local `terraform_docs` pre-commit hook regenerates `README.md` with the **system-installed** terraform-docs. If the local version differs from the CI pin, the formatting may differ from what the `docs` workflow produces — CI is authoritative and will push its own formatting back, so don't fight it when they disagree.
 
 ## AI authorship
 

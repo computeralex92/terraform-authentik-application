@@ -9,6 +9,11 @@
 # The terraform hooks auto-detect the binary to use: `terraform` when present,
 # falling back to `tofu` (OpenTofu) otherwise. `terraform-docs`, `tflint`, and
 # prek itself must be installed (brew: terraform-docs, tflint, prek).
+#
+# The `terraform_docs` hook regenerates README.md locally using the system
+# terraform-docs. CI regenerates it with the pinned terraform-docs image
+# (see .github/workflows/docs.yml); if your local version differs from the
+# pin, CI may rewrite README.md back to the pinned version's formatting.
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -36,3 +41,7 @@ repos:
       - id: terraform_tflint
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+      - id: terraform_docs
+        args:
+          - --args=--config=.terraform-docs.yml

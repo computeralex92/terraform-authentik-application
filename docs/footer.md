@@ -9,11 +9,11 @@
 
 ## Development
 
-The generated tables in `README.md` are kept in sync by the `docs` workflow, which runs `terraform-docs` on every PR and pushes the regenerated `README.md` back to the branch — no manual regeneration needed. Do not run `terraform-docs` locally: the workflow pins v0.20.0 (inside `terraform-docs/gh-actions@v1.4.1`), whose table formatting differs from newer releases. The `validate` workflow runs the remaining checks:
+The generated tables in `README.md` are kept in sync by two mechanisms. The `docs` workflow runs terraform-docs from a pinned docker image on every PR and pushes the regenerated `README.md` back to the branch; the image version is managed by Renovate. A local `terraform_docs` pre-commit hook regenerates `README.md` with your system-installed terraform-docs — if that version differs from the CI pin, the formatting may differ and CI will push its own formatting back, so don't fight it. The `validate` workflow runs the remaining checks (and skips `terraform_docs`):
 
 ```bash
 terraform fmt -recursive
 terraform validate
 tflint
-prek run --all-files            # trailing-whitespace/EOF/secret checks + fmt/validate/tflint
+prek run --all-files            # trailing-whitespace/EOF/secret checks + fmt/validate/tflint/docs
 ```
