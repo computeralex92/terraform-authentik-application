@@ -1,6 +1,6 @@
-# Complete example: one OAuth2 app, one SAML app with SCIM backchannel, one
-# proxy app, one LDAP app, one RADIUS app, one WS-Federation app, and one
-# Microsoft Entra app.
+# Complete example: one app per supported protocol — OAuth2, SAML with SCIM
+# backchannel, proxy, LDAP, RADIUS, WS-Federation, Microsoft Entra, Google
+# Workspace, RAC, and SSF.
 #
 # Configure the provider via AUTHENTIK_URL and AUTHENTIK_TOKEN environment
 # variables (token from a superuser account).
@@ -133,5 +133,50 @@ module "office365" {
     client_secret = var.entra_client_secret
     tenant_id     = var.entra_tenant_id
     dry_run       = true
+  }
+}
+
+module "gws" {
+  source = "../../"
+
+  name     = "Google Workspace"
+  slug     = "gws"
+  protocol = "google_workspace"
+
+  google_workspace = {
+    default_group_email_domain = "example.com"
+    credentials                = var.google_workspace_credentials
+    dry_run                    = true
+  }
+}
+
+module "rac_app" {
+  source = "../../"
+
+  name     = "RAC access"
+  slug     = "rac-app"
+  protocol = "rac"
+
+  rac = {
+    connection_expiry = "minutes=30"
+    endpoints = [
+      {
+        name     = "windows-host"
+        host     = "10.0.0.10"
+        protocol = "rdp"
+      },
+    ]
+  }
+}
+
+module "ssf_app" {
+  source = "../../"
+
+  name     = "Security events"
+  slug     = "ssf-app"
+  protocol = "ssf"
+
+  ssf = {
+    event_retention = "days=30"
   }
 }

@@ -6,15 +6,17 @@ The module is consumed from a separate configuration repo that defines the appli
 
 ## Interface
 
-- `name`, `slug`, `protocol` (`oauth2`|`saml`|`proxy`|`ldap`|`radius`|`ws_federation`|`microsoft_entra`) — required per invocation, plus the matching provider block.
-- `oauth2` / `saml` / `proxy` / `ldap` / `radius` / `ws_federation` / `microsoft_entra` — provider config blocks (exactly one, matching `protocol`).
+- `name`, `slug`, `protocol` (`oauth2`|`saml`|`proxy`|`ldap`|`radius`|`ws_federation`|`microsoft_entra`|`google_workspace`|`rac`|`ssf`) — required per invocation, plus the matching provider block.
+- `oauth2` / `saml` / `proxy` / `ldap` / `radius` / `ws_federation` / `microsoft_entra` / `google_workspace` / `rac` / `ssf` — provider config blocks (exactly one, matching `protocol`).
 - `scim` — optional block; providing it enables a SCIM backchannel provider, omitting it disables SCIM.
-- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** (defaults to the standard Authentik flows); not used by LDAP or Microsoft Entra.
+- `authorization_flow`, `invalidation_flow`, `authentication_flow` — flow **slugs** (defaults to the standard Authentik flows); not used by LDAP or by the provisioning/SSF providers (Microsoft Entra, Google Workspace, SSF). RAC uses authorization (and optionally authentication) but no invalidation flow.
 - `bind_flow`, `unbind_flow` — flow **slugs** used by the LDAP provider.
 - `base_url` — optional; builds derived URLs (e.g. SAML metadata URL) in outputs.
-- Outputs: `application_id`, `provider_id`, and per-protocol blocks — `oauth2` (sensitive), `saml`, `proxy`, `ldap`, `radius` (sensitive), `ws_federation`, `microsoft_entra` (sensitive), `scim` (sensitive) — each `null` when not applicable.
+- Outputs: `application_id`, `provider_id`, and per-protocol blocks — `oauth2` (sensitive), `saml`, `proxy`, `ldap`, `radius` (sensitive), `ws_federation`, `microsoft_entra` (sensitive), `google_workspace` (sensitive), `rac` (sensitive), `ssf`, `scim` (sensitive) — each `null` when not applicable.
 
-Per invocation the module creates: the protocol provider, optional SCIM backchannel provider, inline property mappings (OAuth/proxy scopes, SAML/WS-Fed attributes, RADIUS mappings, Entra user/group mappings, SCIM user/group mappings), and the `authentik_application`.
+Per invocation the module creates: the protocol provider (including RAC endpoints), optional SCIM backchannel provider, inline property mappings (OAuth/proxy scopes, SAML/WS-Fed attributes, RADIUS mappings, Entra/Google Workspace user and group mappings, RAC mappings, SCIM user/group mappings), and the `authentik_application`.
+
+The Microsoft Entra, Google Workspace, RAC, and SSF providers require an Authentik Enterprise license.
 
 ## Layout
 

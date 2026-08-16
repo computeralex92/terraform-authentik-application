@@ -26,3 +26,10 @@ variable "entra_tenant_id" {
   description = "Microsoft Entra tenant ID for the Office 365 app."
   type        = string
 }
+
+variable "google_workspace_credentials" {
+  description = "Google Workspace service-account credentials (JSON object)."
+  type        = map(any)
+  default     = {}
+  sensitive   = true
+}
