@@ -4,62 +4,62 @@ locals {
   uses_authentication_flow = contains(["oauth2", "saml", "proxy", "ws_federation", "rac"], var.protocol)
 
   oauth2_property_mappings = concat(
-    try(var.oauth2.property_mappings, []),
+    try(coalesce(var.oauth2.property_mappings, []), []),
     authentik_property_mapping_provider_scope.this[*].id,
   )
 
   saml_property_mappings = concat(
-    try(var.saml.property_mappings, []),
+    try(coalesce(var.saml.property_mappings, []), []),
     authentik_property_mapping_provider_saml.this[*].id,
   )
 
   proxy_property_mappings = concat(
-    try(var.proxy.property_mappings, []),
+    try(coalesce(var.proxy.property_mappings, []), []),
     authentik_property_mapping_provider_scope.proxy[*].id,
   )
 
   radius_property_mappings = concat(
-    try(var.radius.property_mappings, []),
+    try(coalesce(var.radius.property_mappings, []), []),
     authentik_property_mapping_provider_radius.this[*].id,
   )
 
   ws_federation_property_mappings = concat(
-    try(var.ws_federation.property_mappings, []),
+    try(coalesce(var.ws_federation.property_mappings, []), []),
     authentik_property_mapping_provider_saml.ws_federation[*].id,
   )
 
   entra_user_property_mappings = concat(
-    try(var.microsoft_entra.property_mappings, []),
+    try(coalesce(var.microsoft_entra.property_mappings, []), []),
     authentik_property_mapping_provider_microsoft_entra.user[*].id,
   )
 
   entra_group_property_mappings = concat(
-    try(var.microsoft_entra.property_mappings_group, []),
+    try(coalesce(var.microsoft_entra.property_mappings_group, []), []),
     authentik_property_mapping_provider_microsoft_entra.group[*].id,
   )
 
   google_workspace_user_property_mappings = concat(
-    try(var.google_workspace.property_mappings, []),
+    try(coalesce(var.google_workspace.property_mappings, []), []),
     authentik_property_mapping_provider_google_workspace.user[*].id,
   )
 
   google_workspace_group_property_mappings = concat(
-    try(var.google_workspace.property_mappings_group, []),
+    try(coalesce(var.google_workspace.property_mappings_group, []), []),
     authentik_property_mapping_provider_google_workspace.group[*].id,
   )
 
   rac_property_mappings = concat(
-    try(var.rac.property_mappings, []),
+    try(coalesce(var.rac.property_mappings, []), []),
     authentik_property_mapping_provider_rac.this[*].id,
   )
 
   scim_user_property_mappings = concat(
-    try(var.scim.property_mappings, []),
+    try(coalesce(var.scim.property_mappings, []), []),
     authentik_property_mapping_provider_scim.user[*].id,
   )
 
   scim_group_property_mappings = concat(
-    try(var.scim.property_mappings_group, []),
+    try(coalesce(var.scim.property_mappings_group, []), []),
     authentik_property_mapping_provider_scim.group[*].id,
   )
 
@@ -161,7 +161,7 @@ data "authentik_certificate_key_pair" "ssf_signing" {
 # ---------------------------------------------------------------------------
 
 resource "authentik_property_mapping_provider_scope" "this" {
-  count       = var.protocol == "oauth2" ? length(try(var.oauth2.scopes, [])) : 0
+  count       = var.protocol == "oauth2" ? length(try(coalesce(var.oauth2.scopes, []), [])) : 0
   name        = coalesce(try(var.oauth2.scopes[count.index].name, null), var.oauth2.scopes[count.index].scope_name)
   scope_name  = var.oauth2.scopes[count.index].scope_name
   expression  = var.oauth2.scopes[count.index].expression
@@ -169,7 +169,7 @@ resource "authentik_property_mapping_provider_scope" "this" {
 }
 
 resource "authentik_property_mapping_provider_scope" "proxy" {
-  count       = var.protocol == "proxy" ? length(try(var.proxy.scopes, [])) : 0
+  count       = var.protocol == "proxy" ? length(try(coalesce(var.proxy.scopes, []), [])) : 0
   name        = coalesce(try(var.proxy.scopes[count.index].name, null), var.proxy.scopes[count.index].scope_name)
   scope_name  = var.proxy.scopes[count.index].scope_name
   expression  = var.proxy.scopes[count.index].expression
@@ -177,7 +177,7 @@ resource "authentik_property_mapping_provider_scope" "proxy" {
 }
 
 resource "authentik_property_mapping_provider_saml" "this" {
-  count         = var.protocol == "saml" ? length(try(var.saml.attribute_mappings, [])) : 0
+  count         = var.protocol == "saml" ? length(try(coalesce(var.saml.attribute_mappings, []), [])) : 0
   name          = coalesce(try(var.saml.attribute_mappings[count.index].name, null), var.saml.attribute_mappings[count.index].saml_name)
   saml_name     = var.saml.attribute_mappings[count.index].saml_name
   expression    = var.saml.attribute_mappings[count.index].expression
@@ -185,7 +185,7 @@ resource "authentik_property_mapping_provider_saml" "this" {
 }
 
 resource "authentik_property_mapping_provider_saml" "ws_federation" {
-  count         = var.protocol == "ws_federation" ? length(try(var.ws_federation.attribute_mappings, [])) : 0
+  count         = var.protocol == "ws_federation" ? length(try(coalesce(var.ws_federation.attribute_mappings, []), [])) : 0
   name          = coalesce(try(var.ws_federation.attribute_mappings[count.index].name, null), var.ws_federation.attribute_mappings[count.index].saml_name)
   saml_name     = var.ws_federation.attribute_mappings[count.index].saml_name
   expression    = var.ws_federation.attribute_mappings[count.index].expression
@@ -193,50 +193,50 @@ resource "authentik_property_mapping_provider_saml" "ws_federation" {
 }
 
 resource "authentik_property_mapping_provider_radius" "this" {
-  count      = var.protocol == "radius" ? length(try(var.radius.mappings, [])) : 0
+  count      = var.protocol == "radius" ? length(try(coalesce(var.radius.mappings, []), [])) : 0
   name       = var.radius.mappings[count.index].name
   expression = var.radius.mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_microsoft_entra" "user" {
-  count      = var.protocol == "microsoft_entra" ? length(try(var.microsoft_entra.user_mappings, [])) : 0
+  count      = var.protocol == "microsoft_entra" ? length(try(coalesce(var.microsoft_entra.user_mappings, []), [])) : 0
   name       = var.microsoft_entra.user_mappings[count.index].name
   expression = var.microsoft_entra.user_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_microsoft_entra" "group" {
-  count      = var.protocol == "microsoft_entra" ? length(try(var.microsoft_entra.group_mappings, [])) : 0
+  count      = var.protocol == "microsoft_entra" ? length(try(coalesce(var.microsoft_entra.group_mappings, []), [])) : 0
   name       = var.microsoft_entra.group_mappings[count.index].name
   expression = var.microsoft_entra.group_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_google_workspace" "user" {
-  count      = var.protocol == "google_workspace" ? length(try(var.google_workspace.user_mappings, [])) : 0
+  count      = var.protocol == "google_workspace" ? length(try(coalesce(var.google_workspace.user_mappings, []), [])) : 0
   name       = var.google_workspace.user_mappings[count.index].name
   expression = var.google_workspace.user_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_google_workspace" "group" {
-  count      = var.protocol == "google_workspace" ? length(try(var.google_workspace.group_mappings, [])) : 0
+  count      = var.protocol == "google_workspace" ? length(try(coalesce(var.google_workspace.group_mappings, []), [])) : 0
   name       = var.google_workspace.group_mappings[count.index].name
   expression = var.google_workspace.group_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_rac" "this" {
-  count      = var.protocol == "rac" ? length(try(var.rac.mappings, [])) : 0
+  count      = var.protocol == "rac" ? length(try(coalesce(var.rac.mappings, []), [])) : 0
   name       = var.rac.mappings[count.index].name
   expression = var.rac.mappings[count.index].expression
   settings   = var.rac.mappings[count.index].settings == null ? null : jsonencode(var.rac.mappings[count.index].settings)
 }
 
 resource "authentik_property_mapping_provider_scim" "user" {
-  count      = length(try(var.scim.user_mappings, []))
+  count      = length(try(coalesce(var.scim.user_mappings, []), []))
   name       = var.scim.user_mappings[count.index].name
   expression = var.scim.user_mappings[count.index].expression
 }
 
 resource "authentik_property_mapping_provider_scim" "group" {
-  count      = length(try(var.scim.group_mappings, []))
+  count      = length(try(coalesce(var.scim.group_mappings, []), []))
   name       = var.scim.group_mappings[count.index].name
   expression = var.scim.group_mappings[count.index].expression
 }
@@ -258,9 +258,10 @@ resource "authentik_provider_oauth2" "this" {
   authentication_flow = try(data.authentik_flow.authentication[0].id, null)
 
   allowed_redirect_uris = var.oauth2.allowed_redirect_uris == null ? null : [
-    for uri in var.oauth2.allowed_redirect_uris : try(uri.url, null) != null ? uri : {
-      matching_mode = "strict"
-      url           = uri
+    for uri in var.oauth2.allowed_redirect_uris : {
+      matching_mode     = try(uri.matching_mode, "strict")
+      redirect_uri_type = try(uri.redirect_uri_type, "authorization")
+      url               = try(uri.url, uri)
     }
   ]
 
@@ -290,23 +291,28 @@ resource "authentik_provider_saml" "this" {
   invalidation_flow   = data.authentik_flow.invalidation[0].id
   authentication_flow = try(data.authentik_flow.authentication[0].id, null)
 
-  acs_url              = var.saml.acs_url
-  audience             = var.saml.audience
-  sp_binding           = var.saml.sp_binding
-  sls_url              = var.saml.sls_url
-  sls_binding          = var.saml.sls_binding
-  signing_kp           = try(data.authentik_certificate_key_pair.saml_signing[0].id, null)
-  encryption_kp        = try(data.authentik_certificate_key_pair.saml_encryption[0].id, null)
-  verification_kp      = try(data.authentik_certificate_key_pair.saml_verification[0].id, null)
-  name_id_mapping      = var.saml.name_id_mapping
-  digest_algorithm     = var.saml.digest_algorithm
-  signature_algorithm  = var.saml.signature_algorithm
-  sign_assertion       = var.saml.sign_assertion
-  sign_response        = var.saml.sign_response
-  sign_logout_request  = var.saml.sign_logout_request
-  sign_logout_response = var.saml.sign_logout_response
-  issuer_override      = var.saml.issuer_override
-  default_relay_state  = var.saml.default_relay_state
+  acs_url                         = var.saml.acs_url
+  audience                        = var.saml.audience
+  sp_binding                      = var.saml.sp_binding
+  sls_url                         = var.saml.sls_url
+  sls_binding                     = var.saml.sls_binding
+  signing_kp                      = try(data.authentik_certificate_key_pair.saml_signing[0].id, null)
+  encryption_kp                   = try(data.authentik_certificate_key_pair.saml_encryption[0].id, null)
+  verification_kp                 = try(data.authentik_certificate_key_pair.saml_verification[0].id, null)
+  name_id_mapping                 = var.saml.name_id_mapping
+  digest_algorithm                = var.saml.digest_algorithm
+  signature_algorithm             = var.saml.signature_algorithm
+  sign_assertion                  = var.saml.sign_assertion
+  sign_response                   = var.saml.sign_response
+  sign_logout_request             = var.saml.sign_logout_request
+  sign_logout_response            = var.saml.sign_logout_response
+  issuer_override                 = var.saml.issuer_override
+  default_relay_state             = var.saml.default_relay_state
+  assertion_valid_not_before      = var.saml.assertion_valid_not_before
+  assertion_valid_not_on_or_after = var.saml.assertion_valid_not_on_or_after
+  session_valid_not_on_or_after   = var.saml.session_valid_not_on_or_after
+  logout_method                   = var.saml.logout_method
+  authn_context_class_ref_mapping = var.saml.authn_context_class_ref_mapping
 
   property_mappings = length(local.saml_property_mappings) > 0 ? local.saml_property_mappings : null
 }
@@ -447,7 +453,7 @@ resource "authentik_provider_rac" "this" {
 }
 
 resource "authentik_rac_endpoint" "this" {
-  count = var.protocol == "rac" ? length(try(var.rac.endpoints, [])) : 0
+  count = var.protocol == "rac" ? length(try(coalesce(var.rac.endpoints, []), [])) : 0
 
   name                = var.rac.endpoints[count.index].name
   host                = var.rac.endpoints[count.index].host

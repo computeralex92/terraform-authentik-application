@@ -80,7 +80,7 @@ module "vault" {
   open_in_new_tab    = true
 
   authorization_flow  = "default-provider-authorization-implicit-consent"
-  invalidation_flow   = "default-provider-invalidation"
+  invalidation_flow   = "default-provider-invalidation-flow"
   authentication_flow = "default-authentication-flow"
 
   oauth2 = {
@@ -134,22 +134,26 @@ module "keycloak" {
   group = "Identity"
 
   saml = {
-    acs_url              = "https://keycloak.example.com/realms/master/protocol/saml/clients/authentik"
-    audience             = "https://keycloak.example.com/realms/master"
-    sp_binding           = "post"
-    sls_url              = "https://keycloak.example.com/realms/master/protocol/saml/clients/authentik/slo"
-    sls_binding          = "redirect"
-    signing_key          = authentik_certificate_key_pair.app["signing"].name
-    encryption_key       = authentik_certificate_key_pair.app["encryption"].name
-    verification_key     = authentik_certificate_key_pair.app["signing"].name
-    digest_algorithm     = "http://www.w3.org/2001/04/xmlenc#sha256"
-    signature_algorithm  = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-    sign_assertion       = true
-    sign_response        = true
-    sign_logout_request  = true
-    sign_logout_response = true
-    issuer_override      = "https://auth.example.com/application/saml/keycloak/"
-    default_relay_state  = "https://keycloak.example.com"
+    acs_url                         = "https://keycloak.example.com/realms/master/protocol/saml/clients/authentik"
+    audience                        = "https://keycloak.example.com/realms/master"
+    sp_binding                      = "post"
+    sls_url                         = "https://keycloak.example.com/realms/master/protocol/saml/clients/authentik/slo"
+    sls_binding                     = "redirect"
+    signing_key                     = authentik_certificate_key_pair.app["signing"].name
+    encryption_key                  = authentik_certificate_key_pair.app["encryption"].name
+    verification_key                = authentik_certificate_key_pair.app["signing"].name
+    digest_algorithm                = "http://www.w3.org/2001/04/xmlenc#sha256"
+    signature_algorithm             = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+    sign_assertion                  = true
+    sign_response                   = true
+    sign_logout_request             = true
+    sign_logout_response            = true
+    issuer_override                 = "https://auth.example.com/application/saml/keycloak/"
+    default_relay_state             = "https://keycloak.example.com"
+    assertion_valid_not_before      = "minutes=-5"
+    assertion_valid_not_on_or_after = "minutes=5"
+    session_valid_not_on_or_after   = "hours=8"
+    logout_method                   = "frontchannel_native"
     attribute_mappings = [
       {
         saml_name     = "groups"
@@ -222,7 +226,7 @@ module "openldap" {
   group = "Infrastructure"
 
   bind_flow   = "default-authentication-flow"
-  unbind_flow = "default-provider-invalidation"
+  unbind_flow = "default-provider-invalidation-flow"
 
   ldap = {
     base_dn          = "dc=apps,dc=example,dc=com"

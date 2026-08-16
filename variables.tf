@@ -108,7 +108,7 @@ variable "authorization_flow" {
 variable "invalidation_flow" {
   description = "Slug of the invalidation flow used by the provider (must exist in Authentik)."
   type        = string
-  default     = "default-provider-invalidation"
+  default     = "default-provider-invalidation-flow"
 }
 
 variable "authentication_flow" {
@@ -126,7 +126,7 @@ variable "bind_flow" {
 variable "unbind_flow" {
   description = "Slug of the unbind flow used by the LDAP provider (must exist in Authentik)."
   type        = string
-  default     = "default-provider-invalidation"
+  default     = "default-provider-invalidation-flow"
 }
 
 variable "oauth2" {
@@ -167,6 +167,21 @@ variable "oauth2" {
     property_mappings = optional(list(string))
   })
   default = null
+
+  validation {
+    condition     = var.oauth2 == null || var.oauth2.client_type == null || contains(["confidential", "public"], var.oauth2.client_type)
+    error_message = "`oauth2.client_type` must be 'confidential' or 'public'."
+  }
+
+  validation {
+    condition     = var.oauth2 == null || var.oauth2.issuer_mode == null || contains(["global", "per_provider"], var.oauth2.issuer_mode)
+    error_message = "`oauth2.issuer_mode` must be 'global' or 'per_provider'."
+  }
+
+  validation {
+    condition     = var.oauth2 == null || var.oauth2.sub_mode == null || contains(["hashed_user_id", "user_id", "user_uuid", "user_username", "user_email", "user_upn"], var.oauth2.sub_mode)
+    error_message = "`oauth2.sub_mode` must be one of 'hashed_user_id', 'user_id', 'user_uuid', 'user_username', 'user_email', or 'user_upn'."
+  }
 }
 
 variable "saml" {
@@ -177,23 +192,28 @@ variable "saml" {
     `property_mappings` references existing SAML property mapping IDs.
   EOT
   type = object({
-    acs_url              = string
-    audience             = optional(string)
-    sp_binding           = optional(string)
-    sls_url              = optional(string)
-    sls_binding          = optional(string)
-    signing_key          = optional(string)
-    encryption_key       = optional(string)
-    verification_key     = optional(string)
-    name_id_mapping      = optional(string)
-    digest_algorithm     = optional(string)
-    signature_algorithm  = optional(string)
-    sign_assertion       = optional(bool)
-    sign_response        = optional(bool)
-    sign_logout_request  = optional(bool)
-    sign_logout_response = optional(bool)
-    issuer_override      = optional(string)
-    default_relay_state  = optional(string)
+    acs_url                         = string
+    audience                        = optional(string)
+    sp_binding                      = optional(string)
+    sls_url                         = optional(string)
+    sls_binding                     = optional(string)
+    signing_key                     = optional(string)
+    encryption_key                  = optional(string)
+    verification_key                = optional(string)
+    name_id_mapping                 = optional(string)
+    digest_algorithm                = optional(string)
+    signature_algorithm             = optional(string)
+    sign_assertion                  = optional(bool)
+    sign_response                   = optional(bool)
+    sign_logout_request             = optional(bool)
+    sign_logout_response            = optional(bool)
+    issuer_override                 = optional(string)
+    default_relay_state             = optional(string)
+    assertion_valid_not_before      = optional(string)
+    assertion_valid_not_on_or_after = optional(string)
+    session_valid_not_on_or_after   = optional(string)
+    logout_method                   = optional(string)
+    authn_context_class_ref_mapping = optional(string)
     attribute_mappings = optional(list(object({
       saml_name     = string
       expression    = string
@@ -203,6 +223,21 @@ variable "saml" {
     property_mappings = optional(list(string))
   })
   default = null
+
+  validation {
+    condition     = var.saml == null || var.saml.sp_binding == null || contains(["redirect", "post"], var.saml.sp_binding)
+    error_message = "`saml.sp_binding` must be 'redirect' or 'post'."
+  }
+
+  validation {
+    condition     = var.saml == null || var.saml.sls_binding == null || contains(["redirect", "post"], var.saml.sls_binding)
+    error_message = "`saml.sls_binding` must be 'redirect' or 'post'."
+  }
+
+  validation {
+    condition     = var.saml == null || var.saml.logout_method == null || contains(["frontchannel_iframe", "frontchannel_native", "backchannel"], var.saml.logout_method)
+    error_message = "`saml.logout_method` must be 'frontchannel_iframe', 'frontchannel_native', or 'backchannel'."
+  }
 }
 
 variable "proxy" {
@@ -236,6 +271,11 @@ variable "proxy" {
     property_mappings = optional(list(string))
   })
   default = null
+
+  validation {
+    condition     = var.proxy == null || var.proxy.mode == null || contains(["proxy", "forward_single", "forward_domain"], var.proxy.mode)
+    error_message = "`proxy.mode` must be 'proxy', 'forward_single', or 'forward_domain'."
+  }
 }
 
 variable "ldap" {
@@ -341,6 +381,16 @@ variable "microsoft_entra" {
     property_mappings_group = optional(list(string))
   })
   default = null
+
+  validation {
+    condition     = var.microsoft_entra == null || var.microsoft_entra.group_delete_action == null || contains(["delete", "do_nothing"], var.microsoft_entra.group_delete_action)
+    error_message = "`microsoft_entra.group_delete_action` must be 'delete' or 'do_nothing'."
+  }
+
+  validation {
+    condition     = var.microsoft_entra == null || var.microsoft_entra.user_delete_action == null || contains(["delete", "do_nothing", "suspend"], var.microsoft_entra.user_delete_action)
+    error_message = "`microsoft_entra.user_delete_action` must be 'delete', 'do_nothing', or 'suspend'."
+  }
 }
 
 variable "google_workspace" {
@@ -375,6 +425,16 @@ variable "google_workspace" {
     property_mappings_group = optional(list(string))
   })
   default = null
+
+  validation {
+    condition     = var.google_workspace == null || var.google_workspace.group_delete_action == null || contains(["delete", "do_nothing"], var.google_workspace.group_delete_action)
+    error_message = "`google_workspace.group_delete_action` must be 'delete' or 'do_nothing'."
+  }
+
+  validation {
+    condition     = var.google_workspace == null || var.google_workspace.user_delete_action == null || contains(["delete", "do_nothing", "suspend"], var.google_workspace.user_delete_action)
+    error_message = "`google_workspace.user_delete_action` must be 'delete', 'do_nothing', or 'suspend'."
+  }
 }
 
 variable "rac" {
@@ -465,5 +525,20 @@ variable "scim" {
   validation {
     condition     = var.scim == null || (var.scim.token != null || var.scim.auth_mode == "oauth")
     error_message = "`scim` requires `token` (the default token auth_mode) or `auth_mode = \"oauth\"`."
+  }
+
+  validation {
+    condition     = var.scim == null || var.scim.auth_mode == null || contains(["token", "oauth"], var.scim.auth_mode)
+    error_message = "`scim.auth_mode` must be 'token' or 'oauth'."
+  }
+
+  validation {
+    condition     = var.scim == null || var.scim.auth_mode != "oauth" || var.scim.auth_oauth != null
+    error_message = "`scim.auth_oauth` (the slug of an existing OAuth source) is required when `auth_mode = \"oauth\"`."
+  }
+
+  validation {
+    condition     = var.scim == null || var.scim.compatibility_mode == null || contains(["default", "aws", "slack", "sfdc", "webex", "vcenter", "gitlab"], var.scim.compatibility_mode)
+    error_message = "`scim.compatibility_mode` must be one of 'default', 'aws', 'slack', 'sfdc', 'webex', 'vcenter', or 'gitlab' (gitlab requires Authentik 2026.8+)."
   }
 }
