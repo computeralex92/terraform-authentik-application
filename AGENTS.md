@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Terraform module that wraps the `goauthentik/authentik` provider for managing a single Authentik **application** per module invocation, supporting **OAuth2**, **SAML**, **reverse proxy**, **LDAP**, **RADIUS**, **WS-Federation**, and **Microsoft Entra** providers with optional **SCIM** backchannel provisioning.
+Terraform module that wraps the `goauthentik/authentik` provider for managing a single Authentik **application** per module invocation, supporting **OAuth2**, **SAML**, **reverse proxy**, **LDAP**, **RADIUS**, **WS-Federation**, **Microsoft Entra**, **Google Workspace**, **RAC**, and **SSF** providers with optional **SCIM** backchannel provisioning.
 
 The module is consumed from a separate configuration repo that defines the application catalog — one `module` block per application.
 
@@ -16,7 +16,7 @@ The module is consumed from a separate configuration repo that defines the appli
 
 Per invocation the module creates: the protocol provider (including RAC endpoints), optional SCIM backchannel provider, inline property mappings (OAuth/proxy scopes, SAML/WS-Fed attributes, RADIUS mappings, Entra/Google Workspace user and group mappings, RAC mappings, SCIM user/group mappings), and the `authentik_application`.
 
-The Microsoft Entra, Google Workspace, RAC, and SSF providers require an Authentik Enterprise license.
+The WS-Federation, Microsoft Entra, Google Workspace, RAC, and SSF providers require an Authentik Enterprise license.
 
 ## Layout
 

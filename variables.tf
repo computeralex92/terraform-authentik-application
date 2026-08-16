@@ -108,7 +108,7 @@ variable "authorization_flow" {
 variable "invalidation_flow" {
   description = "Slug of the invalidation flow used by the provider (must exist in Authentik)."
   type        = string
-  default     = "default-provider-invalidation"
+  default     = "default-provider-invalidation-flow"
 }
 
 variable "authentication_flow" {
@@ -126,7 +126,7 @@ variable "bind_flow" {
 variable "unbind_flow" {
   description = "Slug of the unbind flow used by the LDAP provider (must exist in Authentik)."
   type        = string
-  default     = "default-provider-invalidation"
+  default     = "default-provider-invalidation-flow"
 }
 
 variable "oauth2" {

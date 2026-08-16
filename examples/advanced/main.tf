@@ -80,7 +80,7 @@ module "vault" {
   open_in_new_tab    = true
 
   authorization_flow  = "default-provider-authorization-implicit-consent"
-  invalidation_flow   = "default-provider-invalidation"
+  invalidation_flow   = "default-provider-invalidation-flow"
   authentication_flow = "default-authentication-flow"
 
   oauth2 = {
@@ -226,7 +226,7 @@ module "openldap" {
   group = "Infrastructure"
 
   bind_flow   = "default-authentication-flow"
-  unbind_flow = "default-provider-invalidation"
+  unbind_flow = "default-provider-invalidation-flow"
 
   ldap = {
     base_dn          = "dc=apps,dc=example,dc=com"
