@@ -290,23 +290,28 @@ resource "authentik_provider_saml" "this" {
   invalidation_flow   = data.authentik_flow.invalidation[0].id
   authentication_flow = try(data.authentik_flow.authentication[0].id, null)
 
-  acs_url              = var.saml.acs_url
-  audience             = var.saml.audience
-  sp_binding           = var.saml.sp_binding
-  sls_url              = var.saml.sls_url
-  sls_binding          = var.saml.sls_binding
-  signing_kp           = try(data.authentik_certificate_key_pair.saml_signing[0].id, null)
-  encryption_kp        = try(data.authentik_certificate_key_pair.saml_encryption[0].id, null)
-  verification_kp      = try(data.authentik_certificate_key_pair.saml_verification[0].id, null)
-  name_id_mapping      = var.saml.name_id_mapping
-  digest_algorithm     = var.saml.digest_algorithm
-  signature_algorithm  = var.saml.signature_algorithm
-  sign_assertion       = var.saml.sign_assertion
-  sign_response        = var.saml.sign_response
-  sign_logout_request  = var.saml.sign_logout_request
-  sign_logout_response = var.saml.sign_logout_response
-  issuer_override      = var.saml.issuer_override
-  default_relay_state  = var.saml.default_relay_state
+  acs_url                         = var.saml.acs_url
+  audience                        = var.saml.audience
+  sp_binding                      = var.saml.sp_binding
+  sls_url                         = var.saml.sls_url
+  sls_binding                     = var.saml.sls_binding
+  signing_kp                      = try(data.authentik_certificate_key_pair.saml_signing[0].id, null)
+  encryption_kp                   = try(data.authentik_certificate_key_pair.saml_encryption[0].id, null)
+  verification_kp                 = try(data.authentik_certificate_key_pair.saml_verification[0].id, null)
+  name_id_mapping                 = var.saml.name_id_mapping
+  digest_algorithm                = var.saml.digest_algorithm
+  signature_algorithm             = var.saml.signature_algorithm
+  sign_assertion                  = var.saml.sign_assertion
+  sign_response                   = var.saml.sign_response
+  sign_logout_request             = var.saml.sign_logout_request
+  sign_logout_response            = var.saml.sign_logout_response
+  issuer_override                 = var.saml.issuer_override
+  default_relay_state             = var.saml.default_relay_state
+  assertion_valid_not_before      = var.saml.assertion_valid_not_before
+  assertion_valid_not_on_or_after = var.saml.assertion_valid_not_on_or_after
+  session_valid_not_on_or_after   = var.saml.session_valid_not_on_or_after
+  logout_method                   = var.saml.logout_method
+  authn_context_class_ref_mapping = var.saml.authn_context_class_ref_mapping
 
   property_mappings = length(local.saml_property_mappings) > 0 ? local.saml_property_mappings : null
 }

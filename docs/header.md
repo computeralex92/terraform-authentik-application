@@ -166,6 +166,7 @@ SAML provider block (`saml`):
 - `acs_url` is required; `audience`, `sp_binding`, `sls_url`, `sls_binding` configure the service provider.
 - `signing_key`, `encryption_key`, `verification_key` are certificate key pair **names**.
 - `name_id_mapping` is the ID of the property mapping used for the NameID.
+- `assertion_valid_not_before` / `assertion_valid_not_on_or_after`, `session_valid_not_on_or_after`, `logout_method` (`frontchannel_iframe` / `frontchannel_native` / `backchannel`), and `authn_context_class_ref_mapping` tune assertion/session behaviour.
 - `attribute_mappings` creates SAML property mappings and attaches them; `property_mappings` references existing SAML property mapping IDs.
 
 Reverse proxy provider block (`proxy`):
@@ -220,7 +221,7 @@ SSF provider block (`ssf`):
 
 SCIM provider block (`scim`):
 
-- `url` is required; `token` is required unless `auth_mode = "oauth"`.
+- `url` is required; `token` is required unless `auth_mode = "oauth"`, in which case `auth_oauth` (the slug of an existing OAuth source) is required.
 - `compatibility_mode` selects vendor-specific behavior (e.g. `aws`, `slack`, and, from Authentik 2026.8, `gitlab`).
 - `user_mappings` / `group_mappings` create SCIM property mappings; `property_mappings` / `property_mappings_group` reference existing SCIM property mapping IDs.
 
