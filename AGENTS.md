@@ -41,6 +41,16 @@ Single root module (no submodules):
 - The module sets a lower bound (`>= 2026.4.0`); the consuming root config must pin the provider to the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`).
 - Auth: `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` env vars (token from a superuser account). Never hardcode tokens in the module.
 
+## Versioning
+
+The module follows Semantic Versioning (`vX.Y.Z` tags; pushing a tag triggers the release workflow):
+
+- **Major** — breaking interface changes (renamed/removed inputs/outputs, changed defaults requiring consumer changes, dropped protocol support).
+- **Minor** — backward-compatible additions (new `protocol`, new inputs/outputs, examples, docs).
+- **Patch** — backward-compatible bug fixes that do not change the interface.
+
+Cut releases from `main` after the relevant PRs merge. When a feature needs newer Authentik provider attributes, raise the provider lower bound in `versions.tf` and mention the minimum Authentik version in the release notes.
+
 ## Terragrunt
 
 The module is a plain Terraform module and can be consumed from a `terragrunt.hcl` like any other module (Terragrunt invokes the underlying `terraform`/`tofu` binary, so no module changes are needed). See the "Terragrunt" section in `README.md`. `.gitignore` covers `.terragrunt-cache/` and `terragrunt.lock.hcl` in case Terragrunt is run against this repo.
@@ -71,3 +81,4 @@ Commits and PRs authored with AI assistance (opencode, Copilot, Claude Code, or 
 - `plan`/`apply` require a live, reachable Authentik instance — there is no offline path.
 - Authentik's API is eventually consistent; resources often depend on others (e.g. a provider/application must exist before a flow references it). Use explicit `depends_on` where ordering matters instead of relying on implicit references alone.
 - The provider is not available offline; first `terraform init` needs network access to fetch it.
+- The Enterprise-only protocols (WS-Federation, Microsoft Entra, Google Workspace, RAC, SSF) are covered only by static validation — they have **not** been tested against a live Enterprise-licensed instance. Do not claim live verification for them.
