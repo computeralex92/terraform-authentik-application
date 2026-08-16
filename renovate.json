@@ -40,14 +40,11 @@
       "groupName": "authentik provider"
     }
   ],
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": [
-        "^\\.github/workflows/validate\\.ya?ml$"
-      ],
-      "matchStrings": [
-        "tflint_version: v(?<currentValue>[0-9.]+)"
-      ],
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/validate\\.ya?ml$/"],
+      "matchStrings": ["tflint_version: v(?<currentValue>[0-9.]+)"],
       "depNameTemplate": "terraform-linters/tflint",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
