@@ -30,6 +30,8 @@ Each `protocol` value maps to one provider type in Authentik:
 
 > **Enterprise only:** the WS-Federation, Microsoft Entra, Google Workspace, RAC, and SSF providers all require an [Authentik Enterprise license](https://goauthentik.io/pricing/). The other five providers are available in the open-source edition. See the [Enterprise features](https://docs.goauthentik.io/enterprise/enterprise-features/) documentation for details.
 
+> **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. The Enterprise-only providers are covered by static validation (`tofu fmt`/`validate`, `tflint`) only and have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires an Enterprise license.
+
 ## Provider setup
 
 The provider version must track the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`). This module only sets a lower bound; **pin the exact provider version in the consuming configuration** to match your server. The `>= 1.9.0` Terraform constraint is satisfied by both Terraform 1.9+ and the corresponding OpenTofu releases (OpenTofu 1.9 and later).
@@ -139,6 +141,16 @@ Notes for Terragrunt users:
 - The module's `required_version` and provider constraints are enforced by the underlying binary; pin the provider to the Authentik server version as usual.
 - Terragrunt fetches the module source into its `.terragrunt-cache`; the module is stateless, so running from cache needs no extra hooks or files.
 - The module commits no `.terraform.lock.hcl`; the consuming repo manages its own lock files (`terraform.lock.hcl` and, for newer Terragrunt, `terragrunt.lock.hcl`) as normal.
+
+## Versioning
+
+The module follows [Semantic Versioning](https://semver.org) with `vX.Y.Z` tags. Pushing a tag triggers the release workflow, which creates a GitHub Release.
+
+- **Major (`vX.0.0`)** — breaking changes to the module interface: renamed or removed inputs/outputs, changed defaults that require consumer changes, or dropped protocol support.
+- **Minor (`vX.Y.0`)** — backward-compatible additions: a new `protocol`, new provider inputs, new outputs, new examples, or documentation updates.
+- **Patch (`vX.Y.Z`)** — backward-compatible bug fixes that do not change the interface.
+
+Releases are cut from `main` after the relevant PRs are merged. Feature additions that rely on newer Authentik provider attributes should also raise the provider lower bound in `versions.tf` and note the minimum Authentik version in the release notes.
 
 ## Inputs reference
 
