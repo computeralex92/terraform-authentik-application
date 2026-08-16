@@ -28,3 +28,7 @@ jobs:
 
       - name: Run pre-commit hooks
         uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+        env:
+          # README.md regeneration is handled by the docs workflow (pinned
+          # terraform-docs image); validate does not install terraform-docs.
+          SKIP: terraform_docs

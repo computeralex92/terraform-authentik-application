@@ -48,6 +48,14 @@
       "depNameTemplate": "terraform-linters/tflint",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/docs\\.ya?ml$/"],
+      "matchStrings": ["quay\\.io/terraform-docs/terraform-docs:(?<currentValue>[0-9.]+-amd64)"],
+      "depNameTemplate": "quay.io/terraform-docs/terraform-docs",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ]
 }
