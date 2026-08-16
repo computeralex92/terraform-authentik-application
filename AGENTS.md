@@ -57,6 +57,15 @@ The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-comm
 
 `README.md` regeneration is handled by the `docs` workflow in CI, not locally. Do **not** run `terraform-docs` locally to regenerate it: the workflow pins terraform-docs v0.20.0 (inside `terraform-docs/gh-actions@v1.4.1`), which formats the generated tables differently from newer local releases — running a newer version locally would re-introduce drift that CI then has to fix.
 
+## AI authorship
+
+Commits and PRs authored with AI assistance (opencode, Copilot, Claude Code, or any other tool) must be marked so reviewers can triage them without bypassing the branch-protection rules:
+
+- AI-authored commits end with a `Co-authored-by: <tool> <email>` trailer naming the tool (GitHub renders it as a co-author), e.g. `Co-authored-by: opencode <noreply@opencode.ai>`.
+- AI-authored PRs are labeled `ai-authored` (create with `gh pr create --label ai-authored`) and the PR body notes which tool was used.
+- PRs opened from the web UI must tick the "AI assistance" disclosure in `.github/PULL_REQUEST_TEMPLATE.md`.
+- Human-authored commits/PRs leave all of the above unset.
+
 ## Gotchas
 
 - `plan`/`apply` require a live, reachable Authentik instance — there is no offline path.
