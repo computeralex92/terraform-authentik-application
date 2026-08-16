@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars and fill in real values.
+# AUTHENTIK_URL and AUTHENTIK_TOKEN must be set in the environment.
+
+client_secret = "change-me"

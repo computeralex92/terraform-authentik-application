@@ -1,5 +1,6 @@
 # Complete example: one OAuth2 app, one SAML app with SCIM backchannel, one
-# proxy app, and one LDAP app.
+# proxy app, one LDAP app, one RADIUS app, one WS-Federation app, and one
+# Microsoft Entra app.
 #
 # Configure the provider via AUTHENTIK_URL and AUTHENTIK_TOKEN environment
 # variables (token from a superuser account).
@@ -91,5 +92,46 @@ module "openldap" {
 
   ldap = {
     base_dn = "dc=apps,dc=example,dc=com"
+  }
+}
+
+module "freeradius" {
+  source = "../../"
+
+  name     = "FreeRADIUS"
+  slug     = "freeradius"
+  protocol = "radius"
+
+  radius = {
+    shared_secret   = var.radius_shared_secret
+    client_networks = "10.0.0.0/8, 192.168.0.0/16"
+  }
+}
+
+module "wsfed_app" {
+  source = "../../"
+
+  name     = "WS-Federation app"
+  slug     = "wsfed-app"
+  protocol = "ws_federation"
+
+  ws_federation = {
+    reply_url = "https://apps.example.com/wsfed"
+    wtrealm   = "urn:example:apps"
+  }
+}
+
+module "office365" {
+  source = "../../"
+
+  name     = "Office 365"
+  slug     = "office365"
+  protocol = "microsoft_entra"
+
+  microsoft_entra = {
+    client_id     = "example-entra-client-id"
+    client_secret = var.entra_client_secret
+    tenant_id     = var.entra_tenant_id
+    dry_run       = true
   }
 }
