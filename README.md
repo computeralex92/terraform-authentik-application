@@ -258,7 +258,7 @@ data "authentik_property_mapping_provider_scope" "openid" {
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | 2026.5.1 |
+| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | >= 2026.4.0 |
 
 ## Resources
 
