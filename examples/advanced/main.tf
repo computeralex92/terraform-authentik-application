@@ -94,7 +94,8 @@ module "vault" {
         url           = "https://vault.example.com/oidc/callback"
       },
     ]
-    grant_types                = ["authorization_code", "refresh_token"]
+    grant_types                = ["authorization_code", "refresh_token", "token_exchange"]
+    jwt_federation_providers   = [module.wsfed.provider_id]
     access_code_validity       = "minutes=5"
     access_token_validity      = "minutes=10"
     refresh_token_validity     = "days=30"

@@ -133,9 +133,11 @@ variable "oauth2" {
   description = <<-EOT
     OAuth2 provider configuration. Required when `protocol = "oauth2"`. If
     `client_secret` is omitted, Authentik generates one. `signing_key` and
-    `encryption_key` are certificate key pair names. `scopes` creates scope
-    mappings and attaches them; `property_mappings` references existing scope
-    mapping IDs.
+    `encryption_key` are certificate key pair names. `grant_types` includes
+    `token_exchange` to enable OAuth 2.0 token exchange (Authentik 2026.8+),
+    with trusted peers in `jwt_federation_providers` / `jwt_federation_sources`.
+    `scopes` creates scope mappings and attaches them; `property_mappings`
+    references existing scope mapping IDs.
   EOT
   type = object({
     client_id                  = optional(string)
@@ -143,6 +145,8 @@ variable "oauth2" {
     client_type                = optional(string)
     allowed_redirect_uris      = optional(list(any))
     grant_types                = optional(list(string))
+    jwt_federation_providers   = optional(list(number))
+    jwt_federation_sources     = optional(list(string))
     access_code_validity       = optional(string)
     access_token_validity      = optional(string)
     refresh_token_validity     = optional(string)
