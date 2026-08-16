@@ -1,6 +1,7 @@
 locals {
-  uses_standard_flows      = contains(["oauth2", "saml", "proxy", "radius", "ws_federation"], var.protocol)
-  uses_authentication_flow = contains(["oauth2", "saml", "proxy", "ws_federation"], var.protocol)
+  uses_authorization_flow  = contains(["oauth2", "saml", "proxy", "radius", "ws_federation", "rac"], var.protocol)
+  uses_invalidation_flow   = contains(["oauth2", "saml", "proxy", "radius", "ws_federation"], var.protocol)
+  uses_authentication_flow = contains(["oauth2", "saml", "proxy", "ws_federation", "rac"], var.protocol)
 
   oauth2_property_mappings = concat(
     try(var.oauth2.property_mappings, []),
@@ -37,6 +38,21 @@ locals {
     authentik_property_mapping_provider_microsoft_entra.group[*].id,
   )
 
+  google_workspace_user_property_mappings = concat(
+    try(var.google_workspace.property_mappings, []),
+    authentik_property_mapping_provider_google_workspace.user[*].id,
+  )
+
+  google_workspace_group_property_mappings = concat(
+    try(var.google_workspace.property_mappings_group, []),
+    authentik_property_mapping_provider_google_workspace.group[*].id,
+  )
+
+  rac_property_mappings = concat(
+    try(var.rac.property_mappings, []),
+    authentik_property_mapping_provider_rac.this[*].id,
+  )
+
   scim_user_property_mappings = concat(
     try(var.scim.property_mappings, []),
     authentik_property_mapping_provider_scim.user[*].id,
@@ -55,6 +71,9 @@ locals {
     authentik_provider_radius.this[*].id,
     authentik_provider_ws_federation.this[*].id,
     authentik_provider_microsoft_entra.this[*].id,
+    authentik_provider_google_workspace.this[*].id,
+    authentik_provider_rac.this[*].id,
+    authentik_provider_ssf.this[*].id,
   ))
 }
 
@@ -63,12 +82,12 @@ locals {
 # ---------------------------------------------------------------------------
 
 data "authentik_flow" "authorization" {
-  count = local.uses_standard_flows ? 1 : 0
+  count = local.uses_authorization_flow ? 1 : 0
   slug  = var.authorization_flow
 }
 
 data "authentik_flow" "invalidation" {
-  count = local.uses_standard_flows ? 1 : 0
+  count = local.uses_invalidation_flow ? 1 : 0
   slug  = var.invalidation_flow
 }
 
@@ -132,6 +151,11 @@ data "authentik_certificate_key_pair" "ws_fed_encryption" {
   name  = var.ws_federation.encryption_key
 }
 
+data "authentik_certificate_key_pair" "ssf_signing" {
+  count = var.protocol == "ssf" && try(var.ssf.signing_key, null) != null ? 1 : 0
+  name  = var.ssf.signing_key
+}
+
 # ---------------------------------------------------------------------------
 # Property mappings (created only when defined inline)
 # ---------------------------------------------------------------------------
@@ -184,6 +208,25 @@ resource "authentik_property_mapping_provider_microsoft_entra" "group" {
   count      = var.protocol == "microsoft_entra" ? length(try(var.microsoft_entra.group_mappings, [])) : 0
   name       = var.microsoft_entra.group_mappings[count.index].name
   expression = var.microsoft_entra.group_mappings[count.index].expression
+}
+
+resource "authentik_property_mapping_provider_google_workspace" "user" {
+  count      = var.protocol == "google_workspace" ? length(try(var.google_workspace.user_mappings, [])) : 0
+  name       = var.google_workspace.user_mappings[count.index].name
+  expression = var.google_workspace.user_mappings[count.index].expression
+}
+
+resource "authentik_property_mapping_provider_google_workspace" "group" {
+  count      = var.protocol == "google_workspace" ? length(try(var.google_workspace.group_mappings, [])) : 0
+  name       = var.google_workspace.group_mappings[count.index].name
+  expression = var.google_workspace.group_mappings[count.index].expression
+}
+
+resource "authentik_property_mapping_provider_rac" "this" {
+  count      = var.protocol == "rac" ? length(try(var.rac.mappings, [])) : 0
+  name       = var.rac.mappings[count.index].name
+  expression = var.rac.mappings[count.index].expression
+  settings   = var.rac.mappings[count.index].settings == null ? null : jsonencode(var.rac.mappings[count.index].settings)
 }
 
 resource "authentik_property_mapping_provider_scim" "user" {
@@ -368,6 +411,59 @@ resource "authentik_provider_microsoft_entra" "this" {
 
   property_mappings       = length(local.entra_user_property_mappings) > 0 ? local.entra_user_property_mappings : null
   property_mappings_group = length(local.entra_group_property_mappings) > 0 ? local.entra_group_property_mappings : null
+}
+
+resource "authentik_provider_google_workspace" "this" {
+  count = var.protocol == "google_workspace" ? 1 : 0
+
+  name                          = var.name
+  default_group_email_domain    = var.google_workspace.default_group_email_domain
+  credentials                   = var.google_workspace.credentials == null ? null : jsonencode(var.google_workspace.credentials)
+  delegated_subject             = var.google_workspace.delegated_subject
+  dry_run                       = var.google_workspace.dry_run
+  exclude_users_service_account = var.google_workspace.exclude_users_service_account
+  filter_group                  = var.google_workspace.filter_group
+  group_delete_action           = var.google_workspace.group_delete_action
+  user_delete_action            = var.google_workspace.user_delete_action
+  sync_page_size                = var.google_workspace.sync_page_size
+  sync_page_timeout             = var.google_workspace.sync_page_timeout
+
+  property_mappings       = length(local.google_workspace_user_property_mappings) > 0 ? local.google_workspace_user_property_mappings : null
+  property_mappings_group = length(local.google_workspace_group_property_mappings) > 0 ? local.google_workspace_group_property_mappings : null
+}
+
+resource "authentik_provider_rac" "this" {
+  count = var.protocol == "rac" ? 1 : 0
+
+  name                = var.name
+  authorization_flow  = data.authentik_flow.authorization[0].id
+  authentication_flow = try(data.authentik_flow.authentication[0].id, null)
+  connection_expiry   = var.rac.connection_expiry
+  settings            = var.rac.settings == null ? null : jsonencode(var.rac.settings)
+
+  property_mappings = length(local.rac_property_mappings) > 0 ? local.rac_property_mappings : null
+}
+
+resource "authentik_rac_endpoint" "this" {
+  count = var.protocol == "rac" ? length(try(var.rac.endpoints, [])) : 0
+
+  name                = var.rac.endpoints[count.index].name
+  host                = var.rac.endpoints[count.index].host
+  protocol            = var.rac.endpoints[count.index].protocol
+  protocol_provider   = authentik_provider_rac.this[0].id
+  maximum_connections = var.rac.endpoints[count.index].maximum_connections
+  settings            = var.rac.endpoints[count.index].settings == null ? null : jsonencode(var.rac.endpoints[count.index].settings)
+  property_mappings   = var.rac.endpoints[count.index].property_mappings
+}
+
+resource "authentik_provider_ssf" "this" {
+  count = var.protocol == "ssf" ? 1 : 0
+
+  name                     = var.name
+  event_retention          = var.ssf.event_retention
+  signing_key              = try(data.authentik_certificate_key_pair.ssf_signing[0].id, null)
+  jwt_federation_providers = var.ssf.jwt_federation_providers
+  push_verify_certificates = var.ssf.push_verify_certificates
 }
 
 resource "authentik_provider_scim" "this" {

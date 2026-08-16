@@ -35,3 +35,18 @@ output "office365_client_id" {
   description = "Office 365 Microsoft Entra client ID."
   value       = module.office365.microsoft_entra.client_id
 }
+
+output "gws_default_group_email_domain" {
+  description = "Google Workspace default group email domain."
+  value       = module.gws.google_workspace.default_group_email_domain
+}
+
+output "rac_endpoints" {
+  description = "RAC endpoint names."
+  value       = module.rac_app.rac.endpoints
+}
+
+output "ssf_provider_id" {
+  description = "SSF provider ID."
+  value       = module.ssf_app.ssf.provider_id
+}

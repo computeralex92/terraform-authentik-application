@@ -13,11 +13,11 @@ variable "slug" {
 }
 
 variable "protocol" {
-  description = "Provider protocol: `oauth2`, `saml`, `proxy`, `ldap`, `radius`, `ws_federation`, or `microsoft_entra`."
+  description = "Provider protocol: `oauth2`, `saml`, `proxy`, `ldap`, `radius`, `ws_federation`, `microsoft_entra`, `google_workspace`, `rac`, or `ssf`."
   type        = string
   validation {
-    condition     = contains(["oauth2", "saml", "proxy", "ldap", "radius", "ws_federation", "microsoft_entra"], var.protocol)
-    error_message = "`protocol` must be one of 'oauth2', 'saml', 'proxy', 'ldap', 'radius', 'ws_federation', or 'microsoft_entra'."
+    condition     = contains(["oauth2", "saml", "proxy", "ldap", "radius", "ws_federation", "microsoft_entra", "google_workspace", "rac", "ssf"], var.protocol)
+    error_message = "`protocol` must be one of 'oauth2', 'saml', 'proxy', 'ldap', 'radius', 'ws_federation', 'microsoft_entra', 'google_workspace', 'rac', or 'ssf'."
   }
 
   validation {
@@ -28,7 +28,10 @@ variable "protocol" {
       (var.protocol == "ldap" && var.ldap != null) ||
       (var.protocol == "radius" && var.radius != null) ||
       (var.protocol == "ws_federation" && var.ws_federation != null) ||
-      (var.protocol == "microsoft_entra" && var.microsoft_entra != null)
+      (var.protocol == "microsoft_entra" && var.microsoft_entra != null) ||
+      (var.protocol == "google_workspace" && var.google_workspace != null) ||
+      (var.protocol == "rac" && var.rac != null) ||
+      (var.protocol == "ssf" && var.ssf != null)
     )
     error_message = "`protocol` requires the matching provider block: provide the block for the protocol you select."
   }
@@ -332,6 +335,91 @@ variable "microsoft_entra" {
     })))
     property_mappings       = optional(list(string))
     property_mappings_group = optional(list(string))
+  })
+  default = null
+}
+
+variable "google_workspace" {
+  description = <<-EOT
+    Google Workspace provider configuration. Required when `protocol = "google_workspace"`.
+    Provisioning provider that syncs users and groups from Authentik to Google
+    Workspace. `credentials` is a service-account JSON object (json-encoded).
+    `user_mappings` / `group_mappings` create Google Workspace property
+    mappings; `property_mappings` / `property_mappings_group` reference
+    existing Google Workspace property mapping IDs.
+  EOT
+  type = object({
+    default_group_email_domain    = string
+    credentials                   = optional(map(any))
+    delegated_subject             = optional(string)
+    dry_run                       = optional(bool)
+    exclude_users_service_account = optional(bool)
+    filter_group                  = optional(string)
+    group_delete_action           = optional(string)
+    user_delete_action            = optional(string)
+    sync_page_size                = optional(number)
+    sync_page_timeout             = optional(string)
+    user_mappings = optional(list(object({
+      name       = string
+      expression = string
+    })))
+    group_mappings = optional(list(object({
+      name       = string
+      expression = string
+    })))
+    property_mappings       = optional(list(string))
+    property_mappings_group = optional(list(string))
+  })
+  default = null
+}
+
+variable "rac" {
+  description = <<-EOT
+    RAC (Remote Access Control) provider configuration. Required when
+    `protocol = "rac"`. Provides SSH/RDP/VNC access to remote machines defined
+    as `endpoints`. `mappings` creates RAC property mappings and attaches them;
+    `property_mappings` references existing RAC property mapping IDs.
+  EOT
+  type = object({
+    connection_expiry = optional(string)
+    settings          = optional(map(any))
+    mappings = optional(list(object({
+      name       = string
+      expression = optional(string)
+      settings   = optional(map(any))
+    })))
+    property_mappings = optional(list(string))
+    endpoints = optional(list(object({
+      name                = string
+      host                = string
+      protocol            = string
+      maximum_connections = optional(number)
+      settings            = optional(map(any))
+      property_mappings   = optional(list(string))
+    })))
+  })
+  default = null
+
+  validation {
+    condition = var.rac == null || alltrue([
+      for endpoint in var.rac.endpoints == null ? [] : var.rac.endpoints : contains(["rdp", "vnc", "ssh"], endpoint.protocol)
+    ])
+    error_message = "`rac` endpoints `protocol` must be one of 'rdp', 'vnc', or 'ssh'."
+  }
+}
+
+variable "ssf" {
+  description = <<-EOT
+    SSF (Shared Signals Framework) provider configuration. Required when
+    `protocol = "ssf"`. Streams real-time security events (MFA changes,
+    logouts) as Security Event Tokens to subscribed OIDC applications.
+    `signing_key` is a certificate key pair name.
+  EOT
+  type = object({
+    event_retention          = optional(string)
+    signing_key              = optional(string)
+    jwt_federation_providers = optional(list(number))
+    push_verify_certificates = optional(bool)
   })
   default = null
 }

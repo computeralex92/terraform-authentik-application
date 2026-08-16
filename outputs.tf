@@ -79,3 +79,31 @@ output "scim" {
     token       = authentik_provider_scim.this[0].token
   } : null
 }
+
+output "google_workspace" {
+  description = "Google Workspace provider details. `null` when `protocol` is not `google_workspace`. Sensitive because it may include service-account credentials."
+  sensitive   = true
+  value = var.protocol == "google_workspace" ? {
+    provider_id                = authentik_provider_google_workspace.this[0].id
+    default_group_email_domain = authentik_provider_google_workspace.this[0].default_group_email_domain
+    delegated_subject          = authentik_provider_google_workspace.this[0].delegated_subject
+    dry_run                    = authentik_provider_google_workspace.this[0].dry_run
+  } : null
+}
+
+output "rac" {
+  description = "RAC provider details. `null` when `protocol` is not `rac`. Sensitive because provider settings may contain credentials."
+  sensitive   = true
+  value = var.protocol == "rac" ? {
+    provider_id = authentik_provider_rac.this[0].id
+    endpoints   = authentik_rac_endpoint.this[*].name
+  } : null
+}
+
+output "ssf" {
+  description = "SSF provider details. `null` when `protocol` is not `ssf`."
+  value = var.protocol == "ssf" ? {
+    provider_id     = authentik_provider_ssf.this[0].id
+    event_retention = authentik_provider_ssf.this[0].event_retention
+  } : null
+}

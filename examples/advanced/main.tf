@@ -320,3 +320,93 @@ module "office365" {
     ]
   }
 }
+
+# Google Workspace provisioning provider with inline user/group mappings.
+module "gws" {
+  source = "../../"
+
+  name     = "Google Workspace"
+  slug     = "gws"
+  protocol = "google_workspace"
+
+  group = "Productivity"
+
+  google_workspace = {
+    default_group_email_domain    = "example.com"
+    credentials                   = var.google_workspace_credentials
+    delegated_subject             = "admin@example.com"
+    dry_run                       = true
+    exclude_users_service_account = true
+    filter_group                  = "authentik-users"
+    sync_page_size                = 50
+    user_mappings = [
+      {
+        name       = "GWS user email"
+        expression = "return request.user.email"
+      },
+    ]
+    group_mappings = [
+      {
+        name       = "GWS group name"
+        expression = "return request.group.name"
+      },
+    ]
+  }
+}
+
+# RAC provider with inline mappings and two endpoints (RDP + SSH).
+module "rac_app" {
+  source = "../../"
+
+  name     = "RAC access"
+  slug     = "rac-app"
+  protocol = "rac"
+
+  group = "Infrastructure"
+
+  rac = {
+    connection_expiry = "minutes=30"
+    settings = {
+      "security" = "any"
+    }
+    mappings = [
+      {
+        name       = "RAC username"
+        expression = "return request.user.username"
+      },
+    ]
+    endpoints = [
+      {
+        name                = "windows-host"
+        host                = "10.0.0.10"
+        protocol            = "rdp"
+        maximum_connections = 2
+        settings = {
+          "enable-wallpaper" = "true"
+        }
+      },
+      {
+        name     = "linux-host"
+        host     = "10.0.0.20"
+        protocol = "ssh"
+      },
+    ]
+  }
+}
+
+# SSF provider streaming security events, signed with a key pair.
+module "ssf_app" {
+  source = "../../"
+
+  name     = "Security events"
+  slug     = "ssf-app"
+  protocol = "ssf"
+
+  group = "Security"
+
+  ssf = {
+    event_retention          = "days=30"
+    signing_key              = authentik_certificate_key_pair.app["signing"].name
+    push_verify_certificates = true
+  }
+}
