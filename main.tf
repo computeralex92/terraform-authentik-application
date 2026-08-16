@@ -265,6 +265,8 @@ resource "authentik_provider_oauth2" "this" {
   ]
 
   grant_types                = var.oauth2.grant_types
+  jwt_federation_providers   = var.oauth2.jwt_federation_providers
+  jwt_federation_sources     = var.oauth2.jwt_federation_sources
   access_code_validity       = var.oauth2.access_code_validity
   access_token_validity      = var.oauth2.access_token_validity
   refresh_token_validity     = var.oauth2.refresh_token_validity
