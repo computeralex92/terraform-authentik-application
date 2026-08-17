@@ -5,12 +5,12 @@ locals {
 
   oauth2_property_mappings = concat(
     try(coalesce(var.oauth2.property_mappings, []), []),
-    authentik_property_mapping_provider_scope.this[*].id,
+    authentik_property_mapping_provider_scope.oauth2[*].id,
   )
 
   saml_property_mappings = concat(
     try(coalesce(var.saml.property_mappings, []), []),
-    authentik_property_mapping_provider_saml.this[*].id,
+    authentik_property_mapping_provider_saml.saml[*].id,
   )
 
   proxy_property_mappings = concat(
@@ -131,12 +131,12 @@ data "authentik_certificate_key_pair" "saml_verification" {
   name  = var.saml.verification_key
 }
 
-data "authentik_certificate_key_pair" "ldap_cert" {
+data "authentik_certificate_key_pair" "ldap_certificate" {
   count = var.protocol == "ldap" && try(var.ldap.certificate, null) != null ? 1 : 0
   name  = var.ldap.certificate
 }
 
-data "authentik_certificate_key_pair" "radius_cert" {
+data "authentik_certificate_key_pair" "radius_certificate" {
   count = var.protocol == "radius" && try(var.radius.certificate, null) != null ? 1 : 0
   name  = var.radius.certificate
 }
@@ -160,7 +160,7 @@ data "authentik_certificate_key_pair" "ssf_signing" {
 # Property mappings (created only when defined inline)
 # ---------------------------------------------------------------------------
 
-resource "authentik_property_mapping_provider_scope" "this" {
+resource "authentik_property_mapping_provider_scope" "oauth2" {
   count       = var.protocol == "oauth2" ? length(try(coalesce(var.oauth2.scopes, []), [])) : 0
   name        = coalesce(try(var.oauth2.scopes[count.index].name, null), var.oauth2.scopes[count.index].scope_name)
   scope_name  = var.oauth2.scopes[count.index].scope_name
@@ -176,7 +176,7 @@ resource "authentik_property_mapping_provider_scope" "proxy" {
   description = var.proxy.scopes[count.index].description
 }
 
-resource "authentik_property_mapping_provider_saml" "this" {
+resource "authentik_property_mapping_provider_saml" "saml" {
   count         = var.protocol == "saml" ? length(try(coalesce(var.saml.attribute_mappings, []), [])) : 0
   name          = coalesce(try(var.saml.attribute_mappings[count.index].name, null), var.saml.attribute_mappings[count.index].saml_name)
   saml_name     = var.saml.attribute_mappings[count.index].saml_name
@@ -353,7 +353,7 @@ resource "authentik_provider_ldap" "this" {
   unbind_flow      = data.authentik_flow.unbind[0].id
   bind_mode        = var.ldap.bind_mode
   search_mode      = var.ldap.search_mode
-  certificate      = try(data.authentik_certificate_key_pair.ldap_cert[0].id, null)
+  certificate      = try(data.authentik_certificate_key_pair.ldap_certificate[0].id, null)
   mfa_support      = var.ldap.mfa_support
   tls_server_name  = var.ldap.tls_server_name
   gid_start_number = var.ldap.gid_start_number
@@ -366,7 +366,7 @@ resource "authentik_provider_radius" "this" {
   name            = var.name
   shared_secret   = var.radius.shared_secret
   client_networks = var.radius.client_networks
-  certificate     = try(data.authentik_certificate_key_pair.radius_cert[0].id, null)
+  certificate     = try(data.authentik_certificate_key_pair.radius_certificate[0].id, null)
   mfa_support     = var.radius.mfa_support
 
   authorization_flow = data.authentik_flow.authorization[0].id
@@ -516,4 +516,18 @@ resource "authentik_application" "this" {
   meta_hide          = var.meta_hide
   open_in_new_tab    = var.open_in_new_tab
   policy_engine_mode = var.policy_engine_mode
+}
+
+# ---------------------------------------------------------------------------
+# State migrations for renamed resources
+# ---------------------------------------------------------------------------
+
+moved {
+  from = authentik_property_mapping_provider_scope.this
+  to   = authentik_property_mapping_provider_scope.oauth2
+}
+
+moved {
+  from = authentik_property_mapping_provider_saml.this
+  to   = authentik_property_mapping_provider_saml.saml
 }

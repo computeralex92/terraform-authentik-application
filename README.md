@@ -113,12 +113,12 @@ Releases are cut from `main` after the relevant PRs are merged. Feature addition
 | [authentik_property_mapping_provider_microsoft_entra.user](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_microsoft_entra) | resource |
 | [authentik_property_mapping_provider_rac.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_rac) | resource |
 | [authentik_property_mapping_provider_radius.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_radius) | resource |
-| [authentik_property_mapping_provider_saml.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_saml) | resource |
+| [authentik_property_mapping_provider_saml.saml](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_saml) | resource |
 | [authentik_property_mapping_provider_saml.ws_federation](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_saml) | resource |
 | [authentik_property_mapping_provider_scim.group](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_scim) | resource |
 | [authentik_property_mapping_provider_scim.user](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_scim) | resource |
+| [authentik_property_mapping_provider_scope.oauth2](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_scope) | resource |
 | [authentik_property_mapping_provider_scope.proxy](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_scope) | resource |
-| [authentik_property_mapping_provider_scope.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/property_mapping_provider_scope) | resource |
 | [authentik_provider_google_workspace.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/provider_google_workspace) | resource |
 | [authentik_provider_ldap.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/provider_ldap) | resource |
 | [authentik_provider_microsoft_entra.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/provider_microsoft_entra) | resource |
@@ -131,10 +131,10 @@ Releases are cut from `main` after the relevant PRs are merged. Feature addition
 | [authentik_provider_ssf.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/provider_ssf) | resource |
 | [authentik_provider_ws_federation.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/provider_ws_federation) | resource |
 | [authentik_rac_endpoint.this](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/resources/rac_endpoint) | resource |
-| [authentik_certificate_key_pair.ldap_cert](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
+| [authentik_certificate_key_pair.ldap_certificate](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
 | [authentik_certificate_key_pair.oauth2_encryption](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
 | [authentik_certificate_key_pair.oauth2_signing](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
-| [authentik_certificate_key_pair.radius_cert](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
+| [authentik_certificate_key_pair.radius_certificate](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
 | [authentik_certificate_key_pair.saml_encryption](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
 | [authentik_certificate_key_pair.saml_signing](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
 | [authentik_certificate_key_pair.saml_verification](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs/data-sources/certificate_key_pair) | data source |
