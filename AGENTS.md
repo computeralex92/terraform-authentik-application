@@ -37,6 +37,10 @@ Single root module (no submodules):
 - `examples/complete` — one app per supported protocol (OAuth2 + SAML + SCIM + proxy + LDAP + RADIUS + WS-Federation + Microsoft Entra)
 - `examples/advanced` — kitchen-sink: self-generated key pairs (tls provider), inline property mappings, provider tuning, SCIM backchannel
 
+## Naming conventions
+
+Resource labels: `this` for a resource that is the only one of its type; a role-based label (`user`/`group`, `oauth2`/`proxy`, `saml`/`ws_federation`) when the same type appears multiple times. Renaming a resource is a state change for consumers — add a `moved` block in `main.tf` so state migrates without destroy/recreate.
+
 ## Provider
 
 - Source: `goauthentik/authentik` (registry.terraform.io/providers/goauthentik/authentik)
