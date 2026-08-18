@@ -184,7 +184,8 @@ Releases are cut from `main` after the relevant PRs are merged. Feature addition
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_application_id"></a> [application\_id](#output\_application\_id) | ID of the created Authentik application. |
+| <a name="output_application_id"></a> [application\_id](#output\_application\_id) | ID (slug) of the created Authentik application. |
+| <a name="output_application_uuid"></a> [application\_uuid](#output\_application\_uuid) | UUID (pk) of the created Authentik application. Use as the `target` of an `authentik_policy_binding`. |
 | <a name="output_google_workspace"></a> [google\_workspace](#output\_google\_workspace) | Google Workspace provider details. `null` when `protocol` is not `google_workspace`. Sensitive because it may include service-account credentials. |
 | <a name="output_ldap"></a> [ldap](#output\_ldap) | LDAP provider details. `null` when `protocol` is not `ldap`. |
 | <a name="output_microsoft_entra"></a> [microsoft\_entra](#output\_microsoft\_entra) | Microsoft Entra provider details. `null` when `protocol` is not `microsoft_entra`. Sensitive because it includes the client secret. |

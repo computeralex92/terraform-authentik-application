@@ -1,6 +1,11 @@
 output "application_id" {
-  description = "ID of the created Authentik application."
+  description = "ID (slug) of the created Authentik application."
   value       = authentik_application.this.id
+}
+
+output "application_uuid" {
+  description = "UUID (pk) of the created Authentik application. Use as the `target` of an `authentik_policy_binding`."
+  value       = authentik_application.this.uuid
 }
 
 output "provider_id" {
