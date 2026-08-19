@@ -29,7 +29,7 @@ output "saml" {
     sso_url_post     = authentik_provider_saml.this[0].url_sso_post
     slo_url_redirect = authentik_provider_saml.this[0].url_slo_redirect
     slo_url_post     = authentik_provider_saml.this[0].url_slo_post
-    metadata_url     = var.base_url != null ? "${trimend(var.base_url, "/")}/api/v3/providers/saml/${authentik_provider_saml.this[0].id}/metadata/" : null
+    metadata_url     = var.base_url != null ? "${trimsuffix(var.base_url, "/")}/api/v3/providers/saml/${authentik_provider_saml.this[0].id}/metadata/" : null
   } : null
 }
 
