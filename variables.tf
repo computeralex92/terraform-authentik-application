@@ -187,9 +187,9 @@ variable "oauth2" {
     condition = var.oauth2 == null || var.oauth2.allowed_redirect_uris == null || alltrue([
       for uri in var.oauth2.allowed_redirect_uris : can(tostring(uri)) || (
         can(uri.url) &&
-        typeof(uri.url) == "string" &&
-        (can(uri.matching_mode) == false || typeof(uri.matching_mode) == "string") &&
-        (can(uri.redirect_uri_type) == false || typeof(uri.redirect_uri_type) == "string")
+        can(tostring(uri.url)) &&
+        (can(uri.matching_mode) == false || can(tostring(uri.matching_mode))) &&
+        (can(uri.redirect_uri_type) == false || can(tostring(uri.redirect_uri_type)))
       )
     ])
     error_message = "Each element of `oauth2.allowed_redirect_uris` must be a URL string, or an object with a `url` string key and optional `matching_mode`/`redirect_uri_type` string keys."
