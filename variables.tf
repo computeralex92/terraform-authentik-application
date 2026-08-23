@@ -182,6 +182,18 @@ variable "oauth2" {
     condition     = var.oauth2 == null || var.oauth2.sub_mode == null || contains(["hashed_user_id", "user_id", "user_uuid", "user_username", "user_email", "user_upn"], var.oauth2.sub_mode)
     error_message = "`oauth2.sub_mode` must be one of 'hashed_user_id', 'user_id', 'user_uuid', 'user_username', 'user_email', or 'user_upn'."
   }
+
+  validation {
+    condition = var.oauth2 == null || var.oauth2.allowed_redirect_uris == null || alltrue([
+      for uri in var.oauth2.allowed_redirect_uris : can(tostring(uri)) || (
+        can(uri.url) &&
+        typeof(uri.url) == "string" &&
+        (can(uri.matching_mode) == false || typeof(uri.matching_mode) == "string") &&
+        (can(uri.redirect_uri_type) == false || typeof(uri.redirect_uri_type) == "string")
+      )
+    ])
+    error_message = "Each element of `oauth2.allowed_redirect_uris` must be a URL string, or an object with a `url` string key and optional `matching_mode`/`redirect_uri_type` string keys."
+  }
 }
 
 variable "saml" {
@@ -404,7 +416,7 @@ variable "google_workspace" {
   EOT
   type = object({
     default_group_email_domain    = string
-    credentials                   = optional(map(any))
+    credentials                   = optional(map(string))
     delegated_subject             = optional(string)
     dry_run                       = optional(bool)
     exclude_users_service_account = optional(bool)

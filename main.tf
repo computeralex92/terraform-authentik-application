@@ -178,7 +178,7 @@ resource "authentik_property_mapping_provider_scope" "proxy" {
 
 resource "authentik_property_mapping_provider_saml" "saml" {
   count         = var.protocol == "saml" ? length(try(coalesce(var.saml.attribute_mappings, []), [])) : 0
-  name          = coalesce(try(var.saml.attribute_mappings[count.index].name, null), var.saml.attribute_mappings[count.index].saml_name)
+  name          = coalesce(try(var.saml.attribute_mappings[count.index].name, null), replace(var.saml.attribute_mappings[count.index].saml_name, "/[^a-zA-Z0-9_-]/", "_"))
   saml_name     = var.saml.attribute_mappings[count.index].saml_name
   expression    = var.saml.attribute_mappings[count.index].expression
   friendly_name = var.saml.attribute_mappings[count.index].friendly_name
@@ -186,7 +186,7 @@ resource "authentik_property_mapping_provider_saml" "saml" {
 
 resource "authentik_property_mapping_provider_saml" "ws_federation" {
   count         = var.protocol == "ws_federation" ? length(try(coalesce(var.ws_federation.attribute_mappings, []), [])) : 0
-  name          = coalesce(try(var.ws_federation.attribute_mappings[count.index].name, null), var.ws_federation.attribute_mappings[count.index].saml_name)
+  name          = coalesce(try(var.ws_federation.attribute_mappings[count.index].name, null), replace(var.ws_federation.attribute_mappings[count.index].saml_name, "/[^a-zA-Z0-9_-]/", "_"))
   saml_name     = var.ws_federation.attribute_mappings[count.index].saml_name
   expression    = var.ws_federation.attribute_mappings[count.index].expression
   friendly_name = var.ws_federation.attribute_mappings[count.index].friendly_name
