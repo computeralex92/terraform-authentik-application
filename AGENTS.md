@@ -44,7 +44,7 @@ Resource labels: `this` for a resource that is the only one of its type; a role-
 ## Provider
 
 - Source: `goauthentik/authentik` (registry.terraform.io/providers/goauthentik/authentik)
-- The module sets a lower bound (`>= 2026.4.0`); the consuming root config must pin the provider to the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`).
+- The module sets a lower bound (`>= 2026.8.0`); the consuming root config must pin the provider to the version of the Authentik server it targets (e.g. provider `2026.8.x` pairs with Authentik `2026.8`).
 - Auth: `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` env vars (token from a superuser account). Never hardcode tokens in the module.
 
 ## Versioning
