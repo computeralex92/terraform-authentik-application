@@ -1,0 +1,47 @@
+name: provider-matrix
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: authentik (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # "floor" pins the oldest supported provider (read from versions.tf);
+        # "latest" leaves the lower bound and resolves the newest upstream.
+        mode: [floor, latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2
+        with:
+          tofu_version: 1.12.x
+          tofu_wrapper: false
+
+      - name: Pin provider floor (floor only)
+        if: matrix.mode == 'floor'
+        run: |
+          floor="$(grep -oE '20[0-9]{2}\.[0-9]+\.[0-9]+' versions.tf | head -n1)"
+          test -n "$floor"
+          sed -i -E "s/version = \">= 20[0-9]{2}\.[0-9]+\.[0-9]+\"/version = \"= ${floor}\"/" versions.tf
+          echo "Pinned authentik provider to ${floor}"
+          grep -n 'goauthentik' -A3 versions.tf
+
+      - name: Validate module and examples
+        run: |
+          for dir in . examples/minimal examples/complete examples/advanced; do
+            echo "::group::tofu validate ($dir)"
+            tofu -chdir="$dir" init -backend=false -input=false -no-color -upgrade
+            tofu -chdir="$dir" validate -no-color
+            echo "::endgroup::"
+          done

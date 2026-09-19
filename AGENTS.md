@@ -32,7 +32,7 @@ Single root module (no submodules):
 - `examples/*/README.md` — hand-written example docs; must NOT contain `<!-- BEGIN_TF_DOCS -->` markers or the pre-commit `terraform_docs` hook will rewrite them
 - `.tflint.hcl` — built-in rules only (the authentic provider ships no tflint ruleset plugin)
 - `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, validation, linting, and local docs generation (`terraform_docs` uses the system terraform-docs; CI uses a pinned image)
-- `.github/workflows/` — `validate.yml` (fmt/validate/tflint via pre-commit + OpenTofu; skips `terraform_docs`), `docs.yml` (terraform-docs via pinned docker image, pushed back to the PR branch), plus `sast.yml` and `release.yml`
+- `.github/workflows/` — `validate.yml` (fmt/validate/tflint via pre-commit + OpenTofu; skips `terraform_docs`), `provider-matrix.yml` (validates the module and examples against both the provider floor read from `versions.tf` and the latest upstream release), `docs.yml` (terraform-docs via pinned docker image, pushed back to the PR branch), plus `sast.yml` and `release.yml`
 - `examples/minimal` — minimal single OAuth2 app
 - `examples/complete` — one app per supported protocol (OAuth2 + SAML + SCIM + proxy + LDAP + RADIUS + WS-Federation + Microsoft Entra)
 - `examples/advanced` — kitchen-sink: self-generated key pairs (tls provider), inline property mappings, provider tuning, SCIM backchannel
@@ -44,7 +44,8 @@ Resource labels: `this` for a resource that is the only one of its type; a role-
 ## Provider
 
 - Source: `goauthentik/authentik` (registry.terraform.io/providers/goauthentik/authentik)
-- The module sets a lower bound (`>= 2026.4.0`); the consuming root config must pin the provider to the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`).
+- The module sets a lower bound (`>= 2026.5.0`) and deliberately no upper bound; the consuming root config must pin the provider to the version of the Authentik server it targets (e.g. provider `2026.5.x` pairs with Authentik `2026.5`).
+- Support window: the current Authentik provider minor and the previous one (currently `2026.8.x` and `2026.5.x`). The `versions.tf` floor tracks the oldest supported release; when advancing it, update the supported-versions table in `docs/header.md`. The `provider-matrix` workflow reads the floor from `versions.tf` and resolves the latest upstream at run time, so it needs no edit.
 - Auth: `AUTHENTIK_URL` and `AUTHENTIK_TOKEN` env vars (token from a superuser account). Never hardcode tokens in the module.
 
 ## Versioning
@@ -55,7 +56,7 @@ The module follows Semantic Versioning (`vX.Y.Z` tags; pushing a tag triggers th
 - **Minor** — backward-compatible additions (new `protocol`, new inputs/outputs, examples, docs).
 - **Patch** — backward-compatible bug fixes that do not change the interface.
 
-Cut releases from `main` after the relevant PRs merge. When a feature needs newer Authentik provider attributes, raise the provider lower bound in `versions.tf` and mention the minimum Authentik version in the release notes.
+Cut releases from `main` after the relevant PRs merge. The provider floor in `versions.tf` tracks the oldest supported Authentik release (current minor + previous minor) — advancing it drops support for the release that falls out of the window, so call it out in the release notes. When a feature needs newer Authentik provider attributes, raise the floor and mention the minimum Authentik version in the release notes.
 
 ## Terragrunt
 
