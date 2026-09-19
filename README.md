@@ -82,6 +82,18 @@ The module follows [Semantic Versioning](https://semver.org) with `vX.Y.Z` tags.
 
 Releases are cut from `main` after the relevant PRs are merged. Feature additions that rely on newer Authentik provider attributes should also raise the provider lower bound in `versions.tf` and note the minimum Authentik version in the release notes.
 
+## Supported provider versions
+
+The module supports the `goauthentik/authentik` provider for the **current Authentik minor release and the previous one**. It declares a lower bound only (`>= 2026.5.0`) and deliberately no upper bound, so newer provider releases keep working; the consuming root should still pin the provider to the Authentik server it targets.
+
+| Provider version | Authentik server | Support |
+|---|---|---|
+| `2026.8.x` | 2026.8 | Current — supported, validated in CI |
+| `2026.5.x` | 2026.5 | Previous minor — supported, validated in CI |
+| `<= 2026.2.x` | 2026.2 | Unsupported |
+
+The `provider-matrix` workflow validates the module and examples against both ends of the window on every PR: the floor read from `versions.tf` and the latest upstream release. Inputs that depend on a newer **server** feature — for example `grant_types = ["token_exchange"]` (OAuth2/proxy) and SCIM `compatibility_mode = "gitlab"`, both Authentik 2026.8+ — are called out where they are documented.
+
 ## Further documentation
 
 - [Provider reference](docs/protocols.md) — semantics of every input block, per protocol.
@@ -94,13 +106,13 @@ Releases are cut from `main` after the relevant PRs are merged. Feature addition
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
-| <a name="requirement_authentik"></a> [authentik](#requirement\_authentik) | >= 2026.8.0 |
+| <a name="requirement_authentik"></a> [authentik](#requirement\_authentik) | >= 2026.5.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | >= 2026.8.0 |
+| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | >= 2026.5.0 |
 
 ## Resources
 

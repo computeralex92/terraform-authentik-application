@@ -20,7 +20,7 @@ You will receive an acknowledgement within a few business days. Please do not di
 
 ## Supported Versions
 
-Only the latest tagged release (semver) is actively maintained. Older versions may receive security fixes on a best-effort basis. The module's provider requirement is a lower bound (`>= 2026.8.0`) — always pin the provider version to the Authentik server you target, per the README.
+Only the latest tagged release (semver) is actively maintained. Older versions may receive security fixes on a best-effort basis. The module supports the current Authentik provider minor release and the previous one (currently `2026.8.x` and `2026.5.x`); its requirement is a lower bound (`>= 2026.5.0`) — always pin the provider version to the Authentik server you target, per the README.
 
 ## Security Scope
 
