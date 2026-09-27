@@ -30,9 +30,9 @@ Single root module (no submodules):
 - `docs/header.md`, `docs/footer.md` — narrative sections assembled into `README.md`
 - `docs/protocols.md`, `docs/terragrunt.md` — hand-written reference pages linked from `README.md`; not touched by terraform-docs
 - `examples/*/README.md` — hand-written example docs; must NOT contain `<!-- BEGIN_TF_DOCS -->` markers or the pre-commit `terraform_docs` hook will rewrite them
-- `.tflint.hcl` — built-in rules only (the authentic provider ships no tflint ruleset plugin)
-- `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, validation, linting, and local docs generation (`terraform_docs` uses the system terraform-docs; CI uses a pinned image)
-- `.github/workflows/` — `validate.yml` (fmt/validate/tflint via pre-commit + OpenTofu; skips `terraform_docs`), `provider-matrix.yml` (validates the module and examples against both the provider floor read from `versions.tf` and the latest upstream release), `docs.yml` (terraform-docs via pinned docker image, pushed back to the PR branch), plus `sast.yml` and `release.yml`
+- `policy/` — conftest (Open Policy Agent/Rego) policies replacing TFLint's built-in rules; run against the repository root with `--combine` (the policies filter to `*.tf`), with `policy/*_test.rego` holding their unit tests (`conftest verify`)
+- `.pre-commit-config.yaml` — prek (pre-commit-compatible) hooks: formatting, validation, conftest policy checks/tests, and local docs generation (`terraform_docs` uses the system terraform-docs; CI uses a pinned image)
+- `.github/workflows/` — `validate.yml` (fmt/validate/conftest via pre-commit + OpenTofu; skips `terraform_docs`), `provider-matrix.yml` (validates the module and examples against both the provider floor read from `versions.tf` and the latest upstream release), `docs.yml` (terraform-docs via pinned docker image, pushed back to the PR branch), plus `sast.yml` and `release.yml`
 - `examples/minimal` — minimal single OAuth2 app
 - `examples/complete` — one app per supported protocol (OAuth2 + SAML + SCIM + proxy + LDAP + RADIUS + WS-Federation + Microsoft Entra)
 - `examples/advanced` — kitchen-sink: self-generated key pairs (tls provider), inline property mappings, provider tuning, SCIM backchannel
@@ -68,9 +68,9 @@ Run in this order before pushing:
 
 1. `terraform fmt -recursive`
 2. `terraform validate`
-3. `tflint`
+3. `prek run conftest_fmt conftest_verify conftest_terraform --all-files` (conftest policy checks and policy tests)
 
-The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu). The `terraform_docs` hook requires `terraform-docs` to be installed (`brew install terraform-docs`).
+The above (plus trailing-whitespace/EOF/secret checks) are wired into `.pre-commit-config.yaml`, which is run by `prek` (a drop-in pre-commit replacement); install once with `brew install prek && prek install`, then every commit runs them automatically. The terraform hooks use `terraform` when present and fall back to `tofu` (OpenTofu). The `terraform_docs` hook requires `terraform-docs`, and the `conftest_*` hooks require `conftest` (both installed with `brew install`).
 
 `README.md` regeneration is handled in two complementary places:
 
