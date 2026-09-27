@@ -30,7 +30,7 @@ Each `protocol` value maps to one provider type in Authentik:
 
 > **Enterprise only:** the WS-Federation, Microsoft Entra, Google Workspace, RAC, and SSF providers all require an [Authentik Enterprise license](https://goauthentik.io/pricing/). The other five providers are available in the open-source edition. See the [Enterprise features](https://docs.goauthentik.io/enterprise/enterprise-features/) documentation for details.
 
-> **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. The Enterprise-only providers are covered by static validation (`tofu fmt`/`validate`, `tflint`) only and have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires an Enterprise license.
+> **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. The Enterprise-only providers are covered by static validation (`tofu fmt`/`validate`, `conftest`) only and have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires an Enterprise license.
 
 ## Quick start
 

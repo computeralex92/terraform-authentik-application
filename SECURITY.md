@@ -36,7 +36,7 @@ This module wraps the `goauthentik/authentik` Terraform provider. Security-relev
 - GitHub **Secret Scanning** and **Push Protection** on this repository
 - **Dependabot alerts** for vulnerable dependencies
 - **Renovate** for automated dependency updates (grouped PRs)
-- CI runs `terraform fmt`, `terraform validate`, `tflint`, and pre-commit hooks on every PR
+- CI runs `terraform fmt`, `terraform validate`, `conftest` (Terraform policy checks), and pre-commit hooks on every PR
 - GitHub Actions are **pinned to commit SHAs**
 
 ## Acknowledgment

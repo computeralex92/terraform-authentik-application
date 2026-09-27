@@ -7,8 +7,12 @@
 # Run:      prek run --all-files
 #
 # The terraform hooks auto-detect the binary to use: `terraform` when present,
-# falling back to `tofu` (OpenTofu) otherwise. `terraform-docs`, `tflint`, and
-# prek itself must be installed (brew: terraform-docs, tflint, prek).
+# falling back to `tofu` (OpenTofu) otherwise. `terraform-docs`, `conftest`, and
+# prek itself must be installed (brew: terraform-docs, conftest, prek).
+#
+# Terraform linting is provided by conftest (Open Policy Agent/Rego). The
+# policies live in `policy/` and are applied to the repository root by the
+# `conftest_terraform` hook below; the policies themselves filter to *.tf files.
 #
 # The `terraform_docs` hook regenerates README.md locally using the system
 # terraform-docs. CI regenerates it with the pinned terraform-docs image
@@ -38,10 +42,40 @@ repos:
         args:
           - --args=-no-color
 
-      - id: terraform_tflint
-        args:
-          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
-
       - id: terraform_docs
         args:
           - --args=--config=.terraform-docs.yml
+
+  - repo: local
+    hooks:
+      # Format the Rego policies before they are verified/applied.
+      - id: conftest_fmt
+        name: conftest fmt (policy formatting)
+        description: Format the Rego policies in policy/.
+        entry: conftest fmt
+        language: system
+        files: ^policy/.*\.rego$
+        require_serial: true
+
+      # Unit-test the policies themselves.
+      - id: conftest_verify
+        name: conftest verify (policy tests)
+        description: Run the Rego unit tests for the policies in policy/.
+        entry: conftest verify --policy policy --no-color
+        language: system
+        files: ^policy/.*\.rego$
+        pass_filenames: false
+        require_serial: true
+
+      # Apply the policies to every Terraform source file. The root scan is
+      # combined so cross-file policies see each module directory as a whole;
+      # the policies ignore everything that is not *.tf, and downloaded
+      # .terraform contents are excluded here.
+      - id: conftest_terraform
+        name: conftest (Terraform policies)
+        description: Validate Terraform sources against the Rego policies in policy/.
+        entry: conftest test --policy policy --combine --no-color --ignore '[.]terraform' .
+        language: system
+        files: \.tf$
+        pass_filenames: false
+        require_serial: true

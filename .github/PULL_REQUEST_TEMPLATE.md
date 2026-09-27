@@ -25,4 +25,4 @@ Disclose whether AI was used to author this PR or its commits:
 
 - [ ] `tofu fmt -recursive`
 - [ ] `tofu validate`
-- [ ] `tflint`
+- [ ] `conftest` (Terraform policy checks)

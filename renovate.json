@@ -44,8 +44,8 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/validate\\.ya?ml$/"],
-      "matchStrings": ["tflint_version: v(?<currentValue>[0-9.]+)"],
-      "depNameTemplate": "terraform-linters/tflint",
+      "matchStrings": ["CONFTEST_VERSION: v?(?<currentValue>[0-9.]+)"],
+      "depNameTemplate": "open-policy-agent/conftest",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },

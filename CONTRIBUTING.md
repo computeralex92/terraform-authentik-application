@@ -40,9 +40,9 @@ Do **not** open a public issue for security problems. Follow the process in
 
 ## Development Setup
 
-- Install `prek` (`brew install prek`) and `terraform-docs`
-  (`brew install terraform-docs`), then `prek install` to wire the hooks into
-  every commit.
+- Install `prek` (`brew install prek`), `terraform-docs`
+  (`brew install terraform-docs`), and `conftest` (`brew install conftest`),
+  then `prek install` to wire the hooks into every commit.
 - This is a plain Terraform module; see the [Terragrunt](README.md#terragrunt)
   section if you consume it from `terragrunt.hcl`.
 
@@ -51,8 +51,8 @@ Run these in order before pushing:
 ```bash
 terraform fmt -recursive
 terraform validate
-tflint
-prek run --all-files   # trailing-whitespace/EOF/secret checks + fmt/validate/tflint/docs
+prek run conftest_fmt conftest_verify conftest_terraform --all-files   # conftest policy checks/tests
+prek run --all-files   # trailing-whitespace/EOF/secret checks + fmt/validate/conftest/docs
 ```
 
 CI runs these checks (via the `validate` workflow) with `prek` and OpenTofu.
@@ -75,7 +75,7 @@ mechanisms:
 Guidelines:
 
 - Edit the source files, then regenerate with `terraform-docs markdown --config .terraform-docs.yml .`
-- The `validate` workflow runs the remaining checks (`fmt`, `validate`, `tflint`)
+- The `validate` workflow runs the remaining checks (`fmt`, `validate`, `conftest`)
   and skips `terraform_docs`, which is handled by the `docs` workflow.
 - Keep examples (`examples/minimal`, `examples/complete`, `examples/advanced`)
   in sync with the interface.
