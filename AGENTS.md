@@ -92,3 +92,17 @@ Commits and PRs authored with AI assistance (opencode, Copilot, Claude Code, or 
 - Authentik's API is eventually consistent; resources often depend on others (e.g. a provider/application must exist before a flow references it). Use explicit `depends_on` where ordering matters instead of relying on implicit references alone.
 - The provider is not available offline; first `terraform init` needs network access to fetch it.
 - The Enterprise-only protocols (WS-Federation, Microsoft Entra, Google Workspace, RAC, SSF) are covered only by static validation — they have **not** been tested against a live Enterprise-licensed instance. Do not claim live verification for them.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues (`computeralex92/terraform-authentik-application`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, label strings equal to their names. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
