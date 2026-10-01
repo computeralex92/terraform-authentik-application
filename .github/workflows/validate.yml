@@ -18,7 +18,7 @@ jobs:
       - name: Install OpenTofu
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2
         with:
-          tofu_version: 1.12.x
+          tofu_version: 1.13.x
           tofu_wrapper: false
 
       - name: Install conftest
