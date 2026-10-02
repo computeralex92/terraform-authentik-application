@@ -69,13 +69,30 @@ repos:
 
       # Apply the policies to every Terraform source file. The root scan is
       # combined so cross-file policies see each module directory as a whole;
-      # the policies ignore everything that is not *.tf, and downloaded
-      # .terraform contents are excluded here.
+      # most policies ignore everything that is not *.tf, while the protocol
+      # test-coverage policy reads the *.tftest.hcl / *.tofutest.hcl suites.
+      # Downloaded .terraform contents are excluded here. Test files are
+      # included in `files:` so a test-only commit still runs the coverage
+      # policy.
       - id: conftest_terraform
         name: conftest (Terraform policies)
         description: Validate Terraform sources against the Rego policies in policy/.
         entry: conftest test --policy policy --combine --no-color --ignore '[.]terraform' .
         language: system
-        files: \.tf$
+        files: ^(.*\.tf|.*\.(tftest|tofutest)\.hcl)$
+        pass_filenames: false
+        require_serial: true
+
+      # Run the module's native interface test suite. OpenTofu only here: it is
+      # the engine the validate workflow runs, and running both locally would
+      # force a re-init between them (the engines resolve the provider from
+      # different registries). Terraform is covered by the provider-matrix
+      # workflow.
+      - id: terraform_test
+        name: tofu test (module interface tests)
+        description: Run the native *.tofutest.hcl interface test suites.
+        entry: bash -c 'tofu init -input=false -no-color >/dev/null && tofu test -no-color'
+        language: system
+        files: ^(.*\.tf|tests/.*\.(tftest|tofutest)\.hcl)$
         pass_filenames: false
         require_serial: true
