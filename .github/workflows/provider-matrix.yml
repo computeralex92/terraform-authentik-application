@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate:
-    name: authentik (${{ matrix.mode }})
+    name: authentik (${{ matrix.engine }}, ${{ matrix.mode }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -18,15 +18,28 @@ jobs:
         # "floor" pins the oldest supported provider (read from versions.tf);
         # "latest" leaves the lower bound and resolves the newest upstream.
         mode: [floor, latest]
+        # Both engines are exercised: OpenTofu is the primary engine, and the
+        # module also supports Terraform, whose mock provider materialises
+        # values at a different time — hence the separate *.tftest.hcl and
+        # *.tofutest.hcl suites.
+        engine: [tofu, terraform]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install OpenTofu
+        if: matrix.engine == 'tofu'
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2
         with:
           tofu_version: 1.13.x
           tofu_wrapper: false
+
+      - name: Install Terraform
+        if: matrix.engine == 'terraform'
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.16.x
+          terraform_wrapper: false
 
       - name: Pin provider floor (floor only)
         if: matrix.mode == 'floor'
@@ -40,8 +53,11 @@ jobs:
       - name: Validate module and examples
         run: |
           for dir in . examples/minimal examples/complete examples/advanced; do
-            echo "::group::tofu validate ($dir)"
-            tofu -chdir="$dir" init -backend=false -input=false -no-color -upgrade
-            tofu -chdir="$dir" validate -no-color
+            echo "::group::${{ matrix.engine }} validate ($dir)"
+            "${{ matrix.engine }}" -chdir="$dir" init -backend=false -input=false -no-color -upgrade
+            "${{ matrix.engine }}" -chdir="$dir" validate -no-color
             echo "::endgroup::"
           done
+
+      - name: Run interface tests
+        run: "${{ matrix.engine }} test -no-color"

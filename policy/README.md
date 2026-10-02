@@ -2,10 +2,12 @@
 
 Terraform linting is handled by [conftest](https://www.conftest.dev) (Open Policy
 Agent / Rego) instead of TFLint. The policies in this directory are a port of
-the TFLint built-in rules this module enabled. conftest is run against the
-repository root with `--combine`, so cross-file policies see each module
-directory as a whole; the policies themselves filter out everything that is not
-`*.tf`.
+the TFLint built-in rules this module enabled, plus a module-specific policy that
+keeps the protocol test suites in step with the module's protocol list. conftest
+is run against the repository root with `--combine`, so cross-file policies see
+each module directory as a whole; the policies themselves filter out everything
+that is not `*.tf` (except the coverage policy, which reads the
+`*.tftest.hcl` / `*.tofutest.hcl` suites).
 
 | Policy | Replaces | Checks |
 | --- | --- | --- |
@@ -13,6 +15,7 @@ directory as a whole; the policies themselves filter out everything that is not
 | `typed_variables.rego` | `terraform_typed_variables` | every `variable` declares a `type` |
 | `unused_declarations.rego` | `terraform_unused_declarations` | variables, locals, data sources, and provider aliases that are declared but never referenced |
 | `standard_module_structure.rego` | `terraform_standard_module_structure` | `main.tf`/`variables.tf`/`outputs.tf` exist; variables and outputs live in the matching file |
+| `protocol_test_coverage.rego` | _(none — module-specific)_ | every `protocol` enum value has a run in the Terraform and OpenTofu protocol test suites, and both suites declare the same run labels |
 
 ## Rules that are not ported
 

@@ -31,7 +31,7 @@ Each `protocol` value maps to one provider type in Authentik:
 
 > **Enterprise only:** the WS-Federation, Microsoft Entra, Google Workspace, RAC, and SSF providers all require an [Authentik Enterprise license](https://goauthentik.io/pricing/). The other five providers are available in the open-source edition. See the [Enterprise features](https://docs.goauthentik.io/enterprise/enterprise-features/) documentation for details.
 
-> **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. The Enterprise-only providers are covered by static validation (`tofu fmt`/`validate`, `conftest`) only and have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires an Enterprise license.
+> **Testing status:** the open-source providers (OAuth2, SAML, proxy, LDAP, RADIUS, and the SCIM backchannel) are verified end-to-end (apply, idempotent `plan`, destroy) against a live Authentik instance. Every protocol additionally has an **offline interface test suite** that runs under both OpenTofu and Terraform against a mocked provider — no live instance, no license — covering the module's outputs, provider-block gating, flow reads, inline property mappings, and SCIM attachment. These mocked tests are **mock-level**: they verify the module's wiring, not a live server (see `tests/` and [ADR-0001](docs/adr/0001-engine-specific-test-files.md)). The Enterprise-only providers (WS-Federation, Microsoft Entra, Google Workspace, RAC, SSF) have **not** been exercised against a live Enterprise-licensed Authentik instance, because that requires a license.
 
 ## Quick start
 
