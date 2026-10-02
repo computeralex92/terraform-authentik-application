@@ -112,7 +112,7 @@ The `provider-matrix` workflow validates the module and examples against both en
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | 2026.8.0 |
+| <a name="provider_authentik"></a> [authentik](#provider\_authentik) | >= 2026.5.0 |
 
 ## Resources
 
