@@ -23,7 +23,7 @@ jobs:
 
       - name: Install conftest
         env:
-          CONFTEST_VERSION: 0.71.0
+          CONFTEST_VERSION: 0.71.1
         run: |
           case "$(uname -m)" in
             x86_64) asset="Linux_x86_64" ;;
