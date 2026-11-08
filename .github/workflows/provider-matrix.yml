@@ -51,10 +51,20 @@ jobs:
           grep -n 'goauthentik' -A3 versions.tf
 
       - name: Validate module and examples
+        env:
+          # Provider checksums are fetched from github.com release assets, which
+          # occasionally answer 503/504. The default 10s client timeout is too
+          # tight for those; a longer timeout plus the retry below rides it out.
+          TF_REGISTRY_CLIENT_TIMEOUT: "60"
         run: |
           for dir in . examples/minimal examples/complete examples/advanced; do
             echo "::group::${{ matrix.engine }} validate ($dir)"
-            "${{ matrix.engine }}" -chdir="$dir" init -backend=false -input=false -no-color -upgrade
+            for attempt in 1 2 3; do
+              "${{ matrix.engine }}" -chdir="$dir" init -backend=false -input=false -no-color -upgrade && break
+              if [ "$attempt" = 3 ]; then exit 1; fi
+              echo "init failed (attempt $attempt), retrying in 15s" >&2
+              sleep 15
+            done
             "${{ matrix.engine }}" -chdir="$dir" validate -no-color
             echo "::endgroup::"
           done
