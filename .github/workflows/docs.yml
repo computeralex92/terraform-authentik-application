@@ -23,7 +23,7 @@ jobs:
           docker run --rm \
             -v "$PWD:/workdir" \
             -w /workdir \
-            quay.io/terraform-docs/terraform-docs:0.24.0-amd64 \
+            quay.io/terraform-docs/terraform-docs:0.25.1-amd64 \
             markdown --config /workdir/.terraform-docs.yml /workdir
 
       - name: Push changes back to PR
